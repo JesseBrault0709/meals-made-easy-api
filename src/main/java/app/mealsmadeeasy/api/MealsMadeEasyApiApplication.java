@@ -1,15 +1,12 @@
 package app.mealsmadeeasy.api;
 
-import io.jsonwebtoken.Jwts;
+import app.mealsmadeeasy.api.user.UserService;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 
-import javax.crypto.SecretKey;
+import java.util.Set;
 
 @SpringBootApplication
 public class MealsMadeEasyApiApplication {
@@ -18,21 +15,17 @@ public class MealsMadeEasyApiApplication {
 		SpringApplication.run(MealsMadeEasyApiApplication.class, args);
 	}
 
-	@Bean
-	public SecretKey secretKey() {
-		return Jwts.SIG.HS256.key().build();
+	private final UserService userService;
+
+	public MealsMadeEasyApiApplication(UserService userService) {
+		this.userService = userService;
 	}
 
 	@Bean
-	public UserDetailsService userDetailsService() {
-		@SuppressWarnings("deprecation")
-		UserDetails testUser = User
-				.withDefaultPasswordEncoder()
-				.username("test")
-				.password("test")
-				.roles("USER")
-				.build();
-		return new InMemoryUserDetailsManager(testUser);
+	public CommandLineRunner addTestUser() {
+		return args -> {
+			this.userService.createUser("test", "test@test.com", "test", Set.of());
+		};
 	}
 
 }
