@@ -1,6 +1,7 @@
 package app.mealsmadeeasy.api.security;
 
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -12,29 +13,26 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import javax.crypto.SecretKey;
-
 @Configuration
 @EnableWebSecurity
 public class SecurityConfiguration {
 
-    private final SecretKey secretKey;
     private final JpaUserDetailsService jpaUserDetailsService;
+    private final BeanFactory beanFactory;
 
-    public SecurityConfiguration(SecretKey secretKey, JpaUserDetailsService jpaUserDetailsService) {
-        this.secretKey = secretKey;
+    public SecurityConfiguration(JpaUserDetailsService jpaUserDetailsService, BeanFactory beanFactory) {
         this.jpaUserDetailsService = jpaUserDetailsService;
+        this.beanFactory = beanFactory;
     }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return web -> web.ignoring().requestMatchers("/greeting", "/auth/login", "/auth/logout");
+        return web -> web.ignoring().requestMatchers("/greeting", "/auth/**");
     }
 
     @Bean
@@ -51,15 +49,10 @@ public class SecurityConfiguration {
             });
         });
         httpSecurity.addFilterBefore(
-                new JwtFilter(this.secretKey, this.jpaUserDetailsService),
+                this.beanFactory.getBean(JwtFilter.class),
                 UsernamePasswordAuthenticationFilter.class
         );
         return httpSecurity.build();
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return this.jpaUserDetailsService;
     }
 
     @Bean
@@ -70,7 +63,7 @@ public class SecurityConfiguration {
     @Bean
     public DaoAuthenticationProvider daoAuthenticationProvider() {
         final var provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(this.userDetailsService());
+        provider.setUserDetailsService(this.jpaUserDetailsService);
         provider.setPasswordEncoder(this.passwordEncoder());
         return provider;
     }

@@ -1,6 +1,9 @@
-package app.mealsmadeeasy.api.security;
+package app.mealsmadeeasy.api.jwt;
 
+import app.mealsmadeeasy.api.security.AuthToken;
+import app.mealsmadeeasy.api.security.SimpleAuthToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Serializer;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
@@ -17,18 +20,15 @@ public final class JwtServiceImpl implements JwtService {
 
     private final Serializer<Map<String, ?>> serializer;
     private final long accessTokenLifetime;
-    private final long refreshTokenLifetime;
     private final SecretKey secretKey;
 
     public JwtServiceImpl(
             ObjectMapper objectMapper,
             @Value("${app.mealsmadeeasy.api.security.access-token-lifetime}") Long accessTokenLifetime,
-            @Value("${app.mealsmadeeasy.api.security.refresh-token-lifetime}") Long refreshTokenLifetime,
             SecretKey secretKey
     ) {
         this.serializer = new JacksonSerializer<>();
         this.accessTokenLifetime = accessTokenLifetime;
-        this.refreshTokenLifetime = refreshTokenLifetime;
         this.secretKey = secretKey;
     }
 
@@ -42,20 +42,16 @@ public final class JwtServiceImpl implements JwtService {
                 .signWith(this.secretKey)
                 .json(this.serializer)
                 .compact();
-        return new AuthToken(token, this.accessTokenLifetime);
+        return new SimpleAuthToken(token, this.accessTokenLifetime);
     }
 
     @Override
-    public AuthToken generateRefreshToken(String username) {
-        final Instant now = Instant.now();
-        final String token = Jwts.builder()
-                .subject(username)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(this.refreshTokenLifetime)))
-                .signWith(this.secretKey)
-                .json(this.serializer)
-                .compact();
-        return new AuthToken(token, this.refreshTokenLifetime);
+    public String getSubject(String token) throws JwtException {
+        final var jws = Jwts.parser()
+                .verifyWith(this.secretKey)
+                .build()
+                .parseSignedClaims(token);
+        return jws.getPayload().getSubject();
     }
 
 }

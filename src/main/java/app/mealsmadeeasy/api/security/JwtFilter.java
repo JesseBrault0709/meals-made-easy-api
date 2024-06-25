@@ -1,29 +1,32 @@
 package app.mealsmadeeasy.api.security;
 
-import io.jsonwebtoken.Jwts;
+import app.mealsmadeeasy.api.jwt.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
 
+@Lazy
+@Component
 public final class JwtFilter extends OncePerRequestFilter {
 
-    private final SecretKey secretKey;
     private final UserDetailsService userDetailsService;
+    private final JwtService jwtService;
 
-    public JwtFilter(SecretKey secretKey, UserDetailsService userDetailsService) {
-        this.secretKey = secretKey;
+    public JwtFilter(UserDetailsService userDetailsService, JwtService jwtService) {
         this.userDetailsService = userDetailsService;
+        this.jwtService = jwtService;
     }
 
     @Override
@@ -38,11 +41,7 @@ public final class JwtFilter extends OncePerRequestFilter {
         if (authorizationHeader.startsWith("Bearer ")
                 && authorizationHeader.length() > 7) {
             final String token = authorizationHeader.substring(7);
-            final var jws = Jwts.parser()
-                    .verifyWith(this.secretKey)
-                    .build()
-                    .parseSignedClaims(token);
-            final String username = jws.getPayload().getSubject();
+            final String username = this.jwtService.getSubject(token);
             final UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
             final var authenticationToken = new UsernamePasswordAuthenticationToken(
                     userDetails,
