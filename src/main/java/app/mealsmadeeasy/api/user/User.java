@@ -4,7 +4,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Set;
 
-public sealed interface User extends UserDetails permits UserEntity {
+public interface User extends UserDetails {
 
     Long getId();
 
