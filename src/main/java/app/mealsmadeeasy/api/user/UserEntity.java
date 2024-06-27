@@ -5,9 +5,11 @@ import org.springframework.security.core.GrantedAuthority;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @Entity(name = "User")
+@Table(name = "\"user\"")
 public final class UserEntity implements User {
 
     public static UserEntity getDefaultDraft() {
@@ -139,6 +141,43 @@ public final class UserEntity implements User {
 
     public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                this.id,
+                this.username,
+                this.email,
+                this.password,
+                this.authorities,
+                this.enabled,
+                this.expired,
+                this.locked,
+                this.credentialsExpired
+        );
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj instanceof User o) {
+            return Objects.equals(this.id, o.getId())
+                    && Objects.equals(this.username, o.getUsername())
+                    && Objects.equals(this.password, o.getPassword())
+                    && Objects.equals(this.authorities, o.getAuthorities())
+                    && Objects.equals(this.enabled, o.isEnabled())
+                    && Objects.equals(this.expired, !o.isAccountNonExpired())
+                    && Objects.equals(this.locked, !o.isAccountNonLocked())
+                    && Objects.equals(this.credentialsExpired, !o.isCredentialsNonExpired());
+        } else {
+            return false;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "User(" + this.id + ", " + this.username + ", " + this.email + ")";
     }
 
 }
