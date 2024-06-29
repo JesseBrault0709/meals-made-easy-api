@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.util.List;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
@@ -50,6 +52,31 @@ public class RecipeServiceTests {
         assertThat(byId.getId(), is(testRecipe.getId()));
         assertThat(byId.getTitle(), is("My Recipe"));
         assertThat(byId.getRawText(), is("Hello!"));
+    }
+
+    @Test
+    @DirtiesContext
+    public void getByMinimumStars() throws RecipeException {
+        final User owner = this.createTestUser("recipeOwner");
+        final User u0 = this.createTestUser("u0");
+        final User u1 = this.createTestUser("u1");
+
+        final Recipe r0 = this.createTestRecipe(owner);
+        final Recipe r1 = this.createTestRecipe(owner);
+        final Recipe r2 = this.createTestRecipe(owner);
+
+        // r0.stars = 0, r1.stars = 1, r2.stars = 2
+        this.recipeService.addStar(r1, u0);
+        this.recipeService.addStar(r2, u0);
+        this.recipeService.addStar(r2, u1);
+
+        final List<Recipe> zeroStars = this.recipeService.getByMinimumStars(0);
+        final List<Recipe> oneStar = this.recipeService.getByMinimumStars(1);
+        final List<Recipe> twoStars = this.recipeService.getByMinimumStars(2);
+
+        assertThat(zeroStars.size(), is(3));
+        assertThat(oneStar.size(), is(2));
+        assertThat(twoStars.size(), is(1));
     }
 
 }

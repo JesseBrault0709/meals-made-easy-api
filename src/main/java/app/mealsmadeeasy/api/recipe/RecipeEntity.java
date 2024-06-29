@@ -2,6 +2,8 @@ package app.mealsmadeeasy.api.recipe;
 
 import app.mealsmadeeasy.api.recipe.comment.RecipeComment;
 import app.mealsmadeeasy.api.recipe.comment.RecipeCommentEntity;
+import app.mealsmadeeasy.api.recipe.star.RecipeStar;
+import app.mealsmadeeasy.api.recipe.star.RecipeStarEntity;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
 import jakarta.persistence.*;
@@ -40,8 +42,8 @@ public final class RecipeEntity implements Recipe {
     @JoinColumn(name = "owner_id", nullable = false)
     private UserEntity owner;
 
-    @OneToMany
-    private Set<UserEntity> starGazers = new HashSet<>();
+    @OneToMany(mappedBy = "recipe")
+    private Set<RecipeStarEntity> stars = new HashSet<>();
 
     @OneToMany(mappedBy = "recipe")
     private Set<RecipeCommentEntity> comments = new HashSet<>();
@@ -137,16 +139,16 @@ public final class RecipeEntity implements Recipe {
     }
 
     @Override
-    public Set<User> getStarGazers() {
-        return Set.copyOf(this.starGazers);
+    public Set<RecipeStar> getStars() {
+        return Set.copyOf(this.stars);
     }
 
-    public Set<UserEntity> getStarGazerEntities() {
-        return this.starGazers;
+    public Set<RecipeStarEntity> getStarEntities() {
+        return this.stars;
     }
 
-    public void setStarGazers(Set<UserEntity> starGazers) {
-        this.starGazers = starGazers;
+    public void setStarEntities(Set<RecipeStarEntity> starGazers) {
+        this.stars = starGazers;
     }
 
     @Override

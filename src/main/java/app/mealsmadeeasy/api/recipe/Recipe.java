@@ -1,6 +1,7 @@
 package app.mealsmadeeasy.api.recipe;
 
 import app.mealsmadeeasy.api.recipe.comment.RecipeComment;
+import app.mealsmadeeasy.api.recipe.star.RecipeStar;
 import app.mealsmadeeasy.api.user.User;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,7 @@ public interface Recipe {
     String getTitle();
     String getRawText();
     User getOwner();
-    Set<User> getStarGazers();
+    Set<RecipeStar> getStars();
     boolean isPublic();
     Set<User> getViewers();
     Set<RecipeComment> getComments();

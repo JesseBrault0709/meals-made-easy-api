@@ -11,6 +11,6 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
     List<RecipeEntity> findAllByViewersContaining(UserEntity viewer);
     List<RecipeEntity> findAllByOwner(UserEntity owner);
 
-    @Query("SELECT r FROM Recipe r WHERE size(r.starGazers) > ?1")
-    List<RecipeEntity> findAllByStarGazersGreaterThanEqual(long stars);
+    @Query("SELECT r FROM Recipe r WHERE size(r.stars) >= ?1")
+    List<RecipeEntity> findAllByStarsGreaterThanEqual(long stars);
 }

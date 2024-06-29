@@ -71,7 +71,7 @@ public final class RecipeServiceImpl implements RecipeService {
 
     @Override
     public List<Recipe> getByMinimumStars(long minimumStars) {
-        return List.copyOf(this.recipeRepository.findAllByStarGazersGreaterThanEqual(minimumStars));
+        return List.copyOf(this.recipeRepository.findAllByStarsGreaterThanEqual(minimumStars));
     }
 
     @Override
