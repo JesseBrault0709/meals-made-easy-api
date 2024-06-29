@@ -61,9 +61,13 @@ public class RecipeServiceTests {
         final User u0 = this.createTestUser("u0");
         final User u1 = this.createTestUser("u1");
 
-        final Recipe r0 = this.createTestRecipe(owner);
-        final Recipe r1 = this.createTestRecipe(owner);
-        final Recipe r2 = this.createTestRecipe(owner);
+        Recipe r0 = this.createTestRecipe(owner);
+        Recipe r1 = this.createTestRecipe(owner);
+        Recipe r2 = this.createTestRecipe(owner);
+
+        r0 = this.recipeService.setPublic(r0, true);
+        r1 = this.recipeService.setPublic(r1, true);
+        r2 = this.recipeService.setPublic(r2, true);
 
         // r0.stars = 0, r1.stars = 1, r2.stars = 2
         this.recipeService.addStar(r1, u0);

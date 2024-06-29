@@ -120,11 +120,28 @@ public final class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public RecipeStar addStar(Recipe recipe, User giver) {
-        final RecipeEntity entity = (RecipeEntity) recipe;
+    public RecipeStar addStar(Recipe recipe, User giver) throws RecipeException {
+        boolean viewable = false;
+        if (recipe.isPublic()) {
+            viewable = true;
+        } else {
+            final RecipeEntity withViewers = this.recipeRepository.getByIdWithViewers(recipe.getId());
+            for (final var viewer : withViewers.getViewers()) {
+                if (viewer.getId() != null && viewer.getId().equals(giver.getId())) {
+                    viewable = true;
+                    break;
+                }
+            }
+        }
+        if (!viewable) {
+            throw new RecipeException(
+                    RecipeException.Type.NOT_VIEWABLE,
+                    "Recipe with id " + recipe.getId() + " is not viewable by User with id " + giver.getId()
+            );
+        }
         final RecipeStarEntity star = new RecipeStarEntity();
         star.setOwner((UserEntity) giver);
-        star.setRecipe(entity);
+        star.setRecipe((RecipeEntity) recipe);
         return this.recipeStarRepository.save(star);
     }
 
