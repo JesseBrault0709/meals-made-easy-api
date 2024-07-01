@@ -62,6 +62,15 @@ public final class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    public Recipe create(User user, String title, String rawText) {
+        final RecipeEntity draft = new RecipeEntity();
+        draft.setOwner((UserEntity) user);
+        draft.setTitle(title);
+        draft.setRawText(rawText);
+        return this.recipeRepository.save(draft);
+    }
+
+    @Override
     public Recipe getById(long id) throws RecipeException {
         return this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
@@ -116,6 +125,13 @@ public final class RecipeServiceImpl implements RecipeService {
                         "No such username: " + newOwnerUsername
                 ));
         entity.setOwner(newOwner);
+        return this.recipeRepository.save(entity);
+    }
+
+    @Override
+    public Recipe updateOwner(Recipe recipe, User newOwner) throws RecipeException {
+        final RecipeEntity entity = (RecipeEntity) recipe;
+        entity.setOwner((UserEntity) newOwner);
         return this.recipeRepository.save(entity);
     }
 

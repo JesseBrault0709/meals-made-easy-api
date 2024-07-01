@@ -9,6 +9,7 @@ import java.util.List;
 public interface RecipeService {
 
     Recipe create(String ownerUsername, String title, String rawText) throws RecipeException;
+    Recipe create(User user, String title, String rawText);
 
     Recipe getById(long id) throws RecipeException;
     List<Recipe> getByMinimumStars(long minimumStars);
@@ -21,6 +22,7 @@ public interface RecipeService {
     Recipe updateRawText(Recipe recipe, String newRawText);
 
     Recipe updateOwner(Recipe recipe, String newOwnerUsername) throws RecipeException;
+    Recipe updateOwner(Recipe recipe, User newOwner) throws RecipeException;
 
     RecipeStar addStar(Recipe recipe, User giver) throws RecipeException;
     void deleteStarByUser(Recipe recipe, User giver) throws RecipeException;
