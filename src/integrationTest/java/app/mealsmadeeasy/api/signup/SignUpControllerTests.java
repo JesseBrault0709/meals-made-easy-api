@@ -12,11 +12,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.Map;
 
 import static org.hamcrest.Matchers.containsString;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -37,12 +37,13 @@ public class SignUpControllerTests {
     private MockHttpServletRequestBuilder getCheckUsernameRequest(String usernameToCheck)
             throws JsonProcessingException {
         final Map<String, Object> body = Map.of("username", usernameToCheck);
-        return get("/sign-up/check-username")
+        return MockMvcRequestBuilders.get("/sign-up/check-username")
                 .content(this.objectMapper.writeValueAsString(body))
                 .contentType(MediaType.APPLICATION_JSON);
     }
 
     @Test
+    @DirtiesContext
     public void checkUsernameExpectAvailable() throws Exception {
         this.mockMvc.perform(this.getCheckUsernameRequest("isAvailable"))
                 .andExpect(status().isOk())
@@ -61,12 +62,13 @@ public class SignUpControllerTests {
 
     private MockHttpServletRequestBuilder getCheckEmailRequest(String emailToCheck) throws JsonProcessingException {
         final Map<String, Object> body = Map.of("email", emailToCheck);
-        return get("/sign-up/check-email")
+        return MockMvcRequestBuilders.get("/sign-up/check-email")
                 .content(this.objectMapper.writeValueAsString(body))
                 .contentType(MediaType.APPLICATION_JSON);
     }
 
     @Test
+    @DirtiesContext
     public void checkEmailExpectAvailable() throws Exception {
         this.mockMvc.perform(this.getCheckEmailRequest("available@available.com"))
                 .andExpect(status().isOk())

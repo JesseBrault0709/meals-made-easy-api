@@ -17,6 +17,32 @@ repositories {
 	mavenCentral()
 }
 
+sourceSets {
+	testFixtures {
+		compileClasspath += main.output
+	}
+
+	integrationTest {
+		compileClasspath += main.output + testFixtures.output
+		runtimeClasspath += main.runtimeClasspath + testFixtures.runtimeClasspath
+	}
+}
+
+configurations {
+	testFixturesImplementation {
+		extendsFrom implementation
+	}
+
+	integrationTestImplementation {
+		extendsFrom implementation
+		extendsFrom testImplementation
+	}
+
+	integrationTestRuntimeOnly {
+		extendsFrom testRuntimeOnly
+	}
+}
+
 dependencies {
 	// From Spring Initalizr
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
@@ -39,8 +65,17 @@ dependencies {
 
 	// Custom testing
 	testRuntimeOnly 'com.h2database:h2'
+
+	testFixturesImplementation 'org.hamcrest:hamcrest:2.2'
 }
 
-tasks.named('test') {
+tasks.register('integrationTest', Test) {
+	description = 'Run integration tests.'
+	group = 'verification'
+	testClassesDirs = sourceSets.integrationTest.output.classesDirs
+	classpath = sourceSets.integrationTest.runtimeClasspath
+}
+
+tasks.withType(Test).configureEach {
 	useJUnitPlatform()
 }
