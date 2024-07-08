@@ -25,7 +25,8 @@ public final class RecipeStarEntity implements RecipeStar {
     @JoinColumn(name = "recipe_id", nullable = false, updatable = false)
     private RecipeEntity recipe;
 
-    public long getId() {
+    @Override
+    public Long getId() {
         return this.id;
     }
 
@@ -58,6 +59,11 @@ public final class RecipeStarEntity implements RecipeStar {
 
     public void setRecipe(RecipeEntity recipe) {
         this.recipe = recipe;
+    }
+
+    @Override
+    public String toString() {
+        return "RecipeStarEntity(" + this.id + ")";
     }
 
 }

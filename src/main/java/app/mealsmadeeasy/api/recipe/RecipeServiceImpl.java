@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -73,6 +74,14 @@ public final class RecipeServiceImpl implements RecipeService {
     @Override
     public Recipe getById(long id) throws RecipeException {
         return this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
+                RecipeException.Type.INVALID_ID,
+                "No such recipe for id " + id
+        ));
+    }
+
+    @Override
+    public Recipe getByIdWithStars(long id) throws RecipeException {
+        return this.recipeRepository.findByIdWithStars(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
                 "No such recipe for id " + id
         ));
@@ -138,7 +147,7 @@ public final class RecipeServiceImpl implements RecipeService {
     @Override
     public RecipeStar addStar(Recipe recipe, User giver) throws RecipeException {
         boolean viewable = false;
-        if (recipe.isPublic()) {
+        if (recipe.isPublic() || Objects.equals(recipe.getOwner().getId(), giver.getId())) {
             viewable = true;
         } else {
             final RecipeEntity withViewers = this.recipeRepository.getByIdWithViewers(recipe.getId());

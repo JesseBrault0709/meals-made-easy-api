@@ -12,6 +12,8 @@ public interface RecipeService {
     Recipe create(User user, String title, String rawText);
 
     Recipe getById(long id) throws RecipeException;
+    Recipe getByIdWithStars(long id) throws RecipeException;
+
     List<Recipe> getByMinimumStars(long minimumStars);
     List<Recipe> getPublicRecipes();
     List<Recipe> getRecipesViewableBy(User user);

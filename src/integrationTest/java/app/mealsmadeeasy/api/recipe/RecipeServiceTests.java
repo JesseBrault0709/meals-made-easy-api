@@ -1,6 +1,7 @@
 package app.mealsmadeeasy.api.recipe;
 
 import app.mealsmadeeasy.api.matchers.Matchers;
+import app.mealsmadeeasy.api.recipe.star.RecipeStar;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
 import app.mealsmadeeasy.api.user.UserRepository;
@@ -11,8 +12,9 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
 
-import static app.mealsmadeeasy.api.matchers.Matchers.isUser;
+import static app.mealsmadeeasy.api.matchers.Matchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 
 @SpringBootTest
@@ -32,7 +34,7 @@ public class RecipeServiceTests {
         return this.userRepository.save(draft);
     }
 
-    private Recipe createTestRecipe(User owner) throws RecipeException {
+    private Recipe createTestRecipe(User owner) {
         return this.recipeService.create(owner, "My Recipe" , "Hello!");
     }
 
@@ -48,7 +50,7 @@ public class RecipeServiceTests {
 
     @Test
     @DirtiesContext
-    public void createViaUser() throws RecipeException {
+    public void createViaUser() {
         final User user = this.createTestUser("recipeOwner");
         final Recipe recipe = this.recipeService.create(user, "My Recipe", "Hello!");
         assertThat(recipe.getOwner().getUsername(), is(user.getUsername()));
@@ -64,6 +66,16 @@ public class RecipeServiceTests {
         assertThat(byId.getId(), is(testRecipe.getId()));
         assertThat(byId.getTitle(), is("My Recipe"));
         assertThat(byId.getRawText(), is("Hello!"));
+    }
+
+    @Test
+    @DirtiesContext
+    public void getByIdWithStars() throws RecipeException {
+        final User owner = this.createTestUser("recipeOwner");
+        final Recipe recipe = this.createTestRecipe(owner);
+        final RecipeStar star = this.recipeService.addStar(recipe, owner);
+        final Recipe byIdWithStars = this.recipeService.getByIdWithStars(recipe.getId());
+        assertThat(byIdWithStars.getStars(), containsStars(star));
     }
 
     @Test
@@ -179,6 +191,31 @@ public class RecipeServiceTests {
         Recipe recipe = this.createTestRecipe(firstOwner);
         recipe = this.recipeService.updateOwner(recipe, secondOwner);
         assertThat(recipe.getOwner(), isUser(secondOwner));
+    }
+
+    @Test
+    @DirtiesContext
+    public void addStar() throws RecipeException {
+        final User owner = this.createTestUser("recipeOwner");
+        final User starer = this.createTestUser("starer");
+        Recipe recipe = this.createTestRecipe(owner);
+        recipe = this.recipeService.addViewer(recipe, starer);
+        final RecipeStar star = this.recipeService.addStar(recipe, starer);
+        assertThat(star.getRecipe(), isRecipe(recipe));
+        assertThat(star.getOwner(), isUser(starer));
+    }
+
+    @Test
+    @DirtiesContext
+    public void deleteStar() throws RecipeException {
+        final User owner = this.createTestUser("recipeOwner");
+        final User starer = this.createTestUser("starer");
+        Recipe recipe = this.createTestRecipe(owner);
+        recipe = this.recipeService.addViewer(recipe, starer);
+        final RecipeStar star = this.recipeService.addStar(recipe, starer);
+        this.recipeService.deleteStar(star);
+        recipe = this.recipeService.getByIdWithStars(recipe.getId());
+        assertThat(recipe.getStars(), is(empty()));
     }
 
 }
