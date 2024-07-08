@@ -12,9 +12,14 @@ public interface RecipeService {
     Recipe create(User user, String title, String rawText);
 
     Recipe getById(long id) throws RecipeException;
+    Recipe getById(long id, User viewer) throws RecipeException;
+
     Recipe getByIdWithStars(long id) throws RecipeException;
+    Recipe getByIdWithStars(long id, User viewer) throws RecipeException;
 
     List<Recipe> getByMinimumStars(long minimumStars);
+    List<Recipe> getByMinimumStars(long minimumStars, User viewer);
+
     List<Recipe> getPublicRecipes();
     List<Recipe> getRecipesViewableBy(User user);
     List<Recipe> getRecipesOwnedBy(User user);

@@ -73,7 +73,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @PostAuthorize("returnObject.isPublic || @recipeSecurity.isViewableBy(returnObject, principal)")
+    @PostAuthorize("returnObject.isPublic")
     public Recipe getById(long id) throws RecipeException {
         return this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
@@ -82,7 +82,16 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @PostAuthorize("returnObject.isPublic || @recipeSecurity.isViewableBy(returnObject, principal)")
+    @PostAuthorize("returnObject.isPublic || @recipeSecurity.isViewableBy(returnObject, #viewer)")
+    public Recipe getById(long id, User viewer) throws RecipeException {
+        return this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
+                RecipeException.Type.INVALID_ID,
+                "No such recipe for id " + id
+        ));
+    }
+
+    @Override
+    @PostAuthorize("returnObject.isPublic")
     public Recipe getByIdWithStars(long id) throws RecipeException {
         return this.recipeRepository.findByIdWithStars(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
@@ -91,8 +100,24 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @PostAuthorize("returnObject.isPublic || @recipeSecurity.isViewableBy(returnObject, #viewer)")
+    public Recipe getByIdWithStars(long id, User viewer) throws RecipeException {
+        return this.recipeRepository.findByIdWithStars(id).orElseThrow(() -> new RecipeException(
+                RecipeException.Type.INVALID_ID,
+                "No such recipe for id " + id
+        ));
+    }
+
+    @Override
     public List<Recipe> getByMinimumStars(long minimumStars) {
-        return List.copyOf(this.recipeRepository.findAllByStarsGreaterThanEqual(minimumStars));
+        return List.copyOf(this.recipeRepository.findAllPublicByStarsGreaterThanEqual(minimumStars));
+    }
+
+    @Override
+    public List<Recipe> getByMinimumStars(long minimumStars, User viewer) {
+        return List.copyOf(
+                this.recipeRepository.findAllViewableByStarsGreaterThanEqual(minimumStars, (UserEntity) viewer)
+        );
     }
 
     @Override
@@ -137,7 +162,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #giver)")
+    @PreAuthorize("#recipe.isPublic || @recipeSecurity.isViewableBy(#recipe, #giver)")
     public RecipeStar addStar(Recipe recipe, User giver) {
         final RecipeStarEntity star = new RecipeStarEntity();
         star.setOwner((UserEntity) giver);
