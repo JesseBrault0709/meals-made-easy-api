@@ -13,15 +13,16 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 @Service
-public final class RecipeServiceImpl implements RecipeService {
+public class RecipeServiceImpl implements RecipeService {
 
     private static String renderAndCleanMarkdown(String rawText) {
         final var parser = Parser.builder().build();
@@ -72,6 +73,7 @@ public final class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @PostAuthorize("returnObject.isPublic || @recipeSecurity.isViewableBy(returnObject, principal)")
     public Recipe getById(long id) throws RecipeException {
         return this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
@@ -80,6 +82,7 @@ public final class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
+    @PostAuthorize("returnObject.isPublic || @recipeSecurity.isViewableBy(returnObject, principal)")
     public Recipe getByIdWithStars(long id) throws RecipeException {
         return this.recipeRepository.findByIdWithStars(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
@@ -126,44 +129,16 @@ public final class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public Recipe updateOwner(Recipe recipe, String newOwnerUsername) throws RecipeException {
-        final RecipeEntity entity = (RecipeEntity) recipe;
-        final UserEntity newOwner = this.userRepository.findByUsername(newOwnerUsername)
-                .orElseThrow(() -> new RecipeException(
-                        RecipeException.Type.INVALID_OWNER_USERNAME,
-                        "No such username: " + newOwnerUsername
-                ));
-        entity.setOwner(newOwner);
-        return this.recipeRepository.save(entity);
-    }
-
-    @Override
-    public Recipe updateOwner(Recipe recipe, User newOwner) throws RecipeException {
+    @PreAuthorize("@recipeSecurity.isOwner(#recipe, #oldOwner)")
+    public Recipe updateOwner(Recipe recipe, User oldOwner, User newOwner) {
         final RecipeEntity entity = (RecipeEntity) recipe;
         entity.setOwner((UserEntity) newOwner);
         return this.recipeRepository.save(entity);
     }
 
     @Override
-    public RecipeStar addStar(Recipe recipe, User giver) throws RecipeException {
-        boolean viewable = false;
-        if (recipe.isPublic() || Objects.equals(recipe.getOwner().getId(), giver.getId())) {
-            viewable = true;
-        } else {
-            final RecipeEntity withViewers = this.recipeRepository.getByIdWithViewers(recipe.getId());
-            for (final var viewer : withViewers.getViewers()) {
-                if (viewer.getId() != null && viewer.getId().equals(giver.getId())) {
-                    viewable = true;
-                    break;
-                }
-            }
-        }
-        if (!viewable) {
-            throw new RecipeException(
-                    RecipeException.Type.NOT_VIEWABLE,
-                    "Recipe with id " + recipe.getId() + " is not viewable by User with id " + giver.getId()
-            );
-        }
+    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #giver)")
+    public RecipeStar addStar(Recipe recipe, User giver) {
         final RecipeStarEntity star = new RecipeStarEntity();
         star.setOwner((UserEntity) giver);
         star.setRecipe((RecipeEntity) recipe);

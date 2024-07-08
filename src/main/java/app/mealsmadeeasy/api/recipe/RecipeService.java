@@ -23,8 +23,7 @@ public interface RecipeService {
 
     Recipe updateRawText(Recipe recipe, String newRawText);
 
-    Recipe updateOwner(Recipe recipe, String newOwnerUsername) throws RecipeException;
-    Recipe updateOwner(Recipe recipe, User newOwner) throws RecipeException;
+    Recipe updateOwner(Recipe recipe, User oldOwner, User newOwner) throws RecipeException;
 
     RecipeStar addStar(Recipe recipe, User giver) throws RecipeException;
     void deleteStarByUser(Recipe recipe, User giver) throws RecipeException;
