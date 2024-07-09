@@ -2,9 +2,12 @@ package app.mealsmadeeasy.api.recipe;
 
 import app.mealsmadeeasy.api.recipe.comment.RecipeComment;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
+import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.recipe.view.RecipePageView;
 import app.mealsmadeeasy.api.user.User;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 
 import java.util.List;
 
@@ -20,6 +23,7 @@ public interface RecipeService {
     Recipe getByIdWithStars(long id, User viewer) throws RecipeException;
 
     RecipePageView getPageViewById(long id, @Nullable User viewer) throws RecipeException;
+    Slice<RecipeInfoView> getInfoViewsViewableBy(Pageable pageable, @Nullable User viewer);
 
     List<Recipe> getByMinimumStars(long minimumStars);
     List<Recipe> getByMinimumStars(long minimumStars, User viewer);

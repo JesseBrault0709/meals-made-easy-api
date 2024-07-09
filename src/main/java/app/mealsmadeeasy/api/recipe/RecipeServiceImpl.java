@@ -6,6 +6,7 @@ import app.mealsmadeeasy.api.recipe.comment.RecipeCommentRepository;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
 import app.mealsmadeeasy.api.recipe.star.RecipeStarEntity;
 import app.mealsmadeeasy.api.recipe.star.RecipeStarRepository;
+import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.recipe.view.RecipePageView;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
@@ -15,6 +16,8 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -125,6 +128,25 @@ public class RecipeServiceImpl implements RecipeService {
         view.setStarCount(this.getStarCount(recipe, viewer));
         view.setViewerCount(this.getViewerCount(recipe, viewer));
         return view;
+    }
+
+    @Override
+    public Slice<RecipeInfoView> getInfoViewsViewableBy(Pageable pageable, @Nullable User viewer) {
+        return this.recipeRepository.findAllViewableBy((UserEntity) viewer, pageable).map(entity -> {
+            final RecipeInfoView view = new RecipeInfoView();
+            view.setId(entity.getId());
+            if (entity.getModified() != null) {
+                view.setUpdated(entity.getModified());
+            } else {
+                view.setUpdated(entity.getCreated());
+            }
+            view.setTitle(entity.getTitle());
+            view.setOwnerId(entity.getOwner().getId());
+            view.setOwnerUsername(entity.getOwner().getUsername());
+            view.setPublic(entity.isPublic());
+            view.setStarCount(this.getStarCount(entity, viewer));
+            return view;
+        });
     }
 
     @Override

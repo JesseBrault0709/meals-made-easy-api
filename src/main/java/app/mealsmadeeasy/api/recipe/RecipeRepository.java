@@ -1,6 +1,8 @@
 package app.mealsmadeeasy.api.recipe;
 
 import app.mealsmadeeasy.api.user.UserEntity;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -33,5 +35,8 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
 
     @Query("SELECT size(r.viewers) FROM Recipe r WHERE r.id = ?1")
     int getViewerCount(long recipeId);
+
+    @Query("SELECT r FROM Recipe r WHERE r.isPublic OR ?1 MEMBER OF r.viewers")
+    Slice<RecipeEntity> findAllViewableBy(UserEntity viewer, Pageable pageable);
 
 }
