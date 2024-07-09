@@ -64,7 +64,7 @@ public class RecipeServiceTests {
     public void getByIdPublic() throws RecipeException {
         final User owner = this.createTestUser("recipeOwner");
         Recipe recipe = this.createTestRecipe(owner);
-        recipe = this.recipeService.setPublic(recipe, true);
+        recipe = this.recipeService.setPublic(recipe, owner, true);
         final Recipe byId = this.recipeService.getById(recipe.getId());
         assertThat(byId.getId(), is(recipe.getId()));
         assertThat(byId.getTitle(), is("My Recipe"));
@@ -93,7 +93,7 @@ public class RecipeServiceTests {
     public void getByIdOkayWhenPublic() {
         final User owner = this.createTestUser("recipeOwner");
         final Recipe notYetPublicRecipe = this.createTestRecipe(owner);
-        final Recipe publicRecipe = this.recipeService.setPublic(notYetPublicRecipe, true);
+        final Recipe publicRecipe = this.recipeService.setPublic(notYetPublicRecipe, owner, true);
         assertDoesNotThrow(() -> this.recipeService.getById(publicRecipe.getId()));
     }
 
@@ -103,7 +103,7 @@ public class RecipeServiceTests {
         final User owner = this.createTestUser("recipeOwner");
         final User viewer = this.createTestUser("viewer");
         final Recipe notYetPublicRecipe = this.createTestRecipe(owner);
-        final Recipe publicRecipe = this.recipeService.setPublic(notYetPublicRecipe, true);
+        final Recipe publicRecipe = this.recipeService.setPublic(notYetPublicRecipe, owner, true);
         assertDoesNotThrow(() -> this.recipeService.getById(publicRecipe.getId(), viewer));
     }
 
@@ -112,7 +112,7 @@ public class RecipeServiceTests {
     public void getByIdWithStarsPublic() throws RecipeException {
         final User owner = this.createTestUser("recipeOwner");
         Recipe recipe = this.createTestRecipe(owner);
-        recipe = this.recipeService.setPublic(recipe, true);
+        recipe = this.recipeService.setPublic(recipe, owner, true);
         final RecipeStar star = this.recipeService.addStar(recipe, owner);
         final Recipe byIdWithStars = this.recipeService.getByIdWithStars(recipe.getId());
         assertThat(byIdWithStars.getStars(), containsStars(star));
@@ -132,7 +132,7 @@ public class RecipeServiceTests {
     public void getByIdWithStarsOkayWhenPublic() {
         final User owner = this.createTestUser("recipeOwner");
         final Recipe notYetPublicRecipe = this.createTestRecipe(owner);
-        final Recipe publicRecipe = this.recipeService.setPublic(notYetPublicRecipe, true);
+        final Recipe publicRecipe = this.recipeService.setPublic(notYetPublicRecipe, owner, true);
         assertDoesNotThrow(() -> this.recipeService.getByIdWithStars(publicRecipe.getId()));
     }
 
@@ -142,7 +142,7 @@ public class RecipeServiceTests {
         final User owner = this.createTestUser("recipeOwner");
         final User viewer = this.createTestUser("viewer");
         final Recipe notYetPublicRecipe = this.createTestRecipe(owner);
-        final Recipe publicRecipe = this.recipeService.setPublic(notYetPublicRecipe, true);
+        final Recipe publicRecipe = this.recipeService.setPublic(notYetPublicRecipe, owner, true);
         assertDoesNotThrow(() -> this.recipeService.getByIdWithStars(publicRecipe.getId(), viewer));
     }
 
@@ -157,9 +157,9 @@ public class RecipeServiceTests {
         Recipe r1 = this.createTestRecipe(owner);
         Recipe r2 = this.createTestRecipe(owner);
 
-        r0 = this.recipeService.setPublic(r0, true);
-        r1 = this.recipeService.setPublic(r1, true);
-        r2 = this.recipeService.setPublic(r2, true);
+        r0 = this.recipeService.setPublic(r0, owner, true);
+        r1 = this.recipeService.setPublic(r1, owner, true);
+        r2 = this.recipeService.setPublic(r2, owner, true);
 
         // r0.stars = 0, r1.stars = 1, r2.stars = 2
         this.recipeService.addStar(r1, u0);
@@ -236,8 +236,8 @@ public class RecipeServiceTests {
         Recipe r0 = this.createTestRecipe(owner);
         Recipe r1 = this.createTestRecipe(owner);
 
-        r0 = this.recipeService.setPublic(r0, true);
-        r1 = this.recipeService.setPublic(r1, true);
+        r0 = this.recipeService.setPublic(r0, owner, true);
+        r1 = this.recipeService.setPublic(r1, owner, true);
 
         final List<Recipe> publicRecipes = this.recipeService.getPublicRecipes();
         assertThat(publicRecipes.size(), is(2));
@@ -274,8 +274,17 @@ public class RecipeServiceTests {
         final Recipe recipe = this.recipeService.create(
                 owner, "My Recipe", "# A Heading"
         );
-        final String rendered = this.recipeService.getRenderedMarkdown(recipe);
+        final String rendered = this.recipeService.getRenderedMarkdown(recipe, owner);
         assertThat(rendered, is("<h1>A Heading</h1>"));
+    }
+
+    @Test
+    @DirtiesContext
+    public void getRenderedMarkThrowsIfNotViewable() {
+        final User owner = this.createTestUser("recipeOwner");
+        final User notViewer = this.createTestUser("notViewer");
+        final Recipe recipe = this.createTestRecipe(owner);
+        assertThrows(AccessDeniedException.class, () -> this.recipeService.getRenderedMarkdown(recipe, notViewer));
     }
 
     @Test
@@ -286,8 +295,20 @@ public class RecipeServiceTests {
                 owner, "My Recipe", "# A Heading"
         );
         final String newRawText = "# A Heading\n## A Subheading";
-        recipe = this.recipeService.updateRawText(recipe, newRawText);
+        recipe = this.recipeService.updateRawText(recipe, owner, newRawText);
         assertThat(recipe.getRawText(), is(newRawText));
+    }
+
+    @Test
+    @DirtiesContext
+    public void updateRawTextThrowsIfNotOwner() {
+        final User owner = this.createTestUser("recipeOwner");
+        final User notOwner = this.createTestUser("notOwner");
+        final Recipe recipe = this.createTestRecipe(owner);
+        assertThrows(
+                AccessDeniedException.class,
+                () -> this.recipeService.updateRawText(recipe, notOwner, "should fail")
+        );
     }
 
     @Test
@@ -341,6 +362,24 @@ public class RecipeServiceTests {
         this.recipeService.deleteStar(star);
         recipe = this.recipeService.getByIdWithStars(recipe.getId(), owner);
         assertThat(recipe.getStars(), is(empty()));
+    }
+
+    @Test
+    @DirtiesContext
+    public void deleteRecipe() {
+        final User owner = this.createTestUser("recipeOwner");
+        final Recipe toDelete = this.createTestRecipe(owner);
+        this.recipeService.deleteRecipe(toDelete, owner);
+        assertThrows(RecipeException.class, () -> this.recipeService.getById(toDelete.getId(), owner));
+    }
+
+    @Test
+    @DirtiesContext
+    public void deleteRecipeThrowsIfNotOwner() {
+        final User owner = this.createTestUser("recipeOwner");
+        final User notOwner = this.createTestUser("notOwner");
+        final Recipe toDelete = this.createTestRecipe(owner);
+        assertThrows(AccessDeniedException.class, () -> this.recipeService.deleteRecipe(toDelete, notOwner));
     }
 
 }

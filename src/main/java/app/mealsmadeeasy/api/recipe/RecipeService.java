@@ -24,9 +24,9 @@ public interface RecipeService {
     List<Recipe> getRecipesViewableBy(User user);
     List<Recipe> getRecipesOwnedBy(User user);
 
-    String getRenderedMarkdown(Recipe recipe);
+    String getRenderedMarkdown(Recipe recipe, User viewer);
 
-    Recipe updateRawText(Recipe recipe, String newRawText);
+    Recipe updateRawText(Recipe recipe, User owner, String newRawText);
 
     Recipe updateOwner(Recipe recipe, User oldOwner, User newOwner) throws RecipeException;
 
@@ -34,7 +34,7 @@ public interface RecipeService {
     void deleteStarByUser(Recipe recipe, User giver) throws RecipeException;
     void deleteStar(RecipeStar recipeStar);
 
-    Recipe setPublic(Recipe recipe, boolean isPublic);
+    Recipe setPublic(Recipe recipe, User owner, boolean isPublic);
 
     Recipe addViewer(Recipe recipe, User user);
     Recipe removeViewer(Recipe recipe, User user);
@@ -47,7 +47,7 @@ public interface RecipeService {
     void deleteComment(RecipeComment comment);
     Recipe clearComments(Recipe recipe);
 
-    void deleteRecipe(Recipe recipe);
-    void deleteById(long id);
+    void deleteRecipe(Recipe recipe, User owner);
+    void deleteById(long id, User owner);
 
 }

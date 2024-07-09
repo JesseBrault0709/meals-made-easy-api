@@ -136,7 +136,8 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public String getRenderedMarkdown(Recipe recipe) {
+    @PreAuthorize("#recipe.isPublic || @recipeSecurity.isViewableBy(#recipe, #viewer)")
+    public String getRenderedMarkdown(Recipe recipe, User viewer) {
         RecipeEntity entity = (RecipeEntity) recipe;
         if (entity.getCachedRenderedText() == null) {
             entity.setCachedRenderedText(renderAndCleanMarkdown(entity.getRawText()));
@@ -146,7 +147,8 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public Recipe updateRawText(Recipe recipe, String newRawText) {
+    @PreAuthorize("@recipeSecurity.isOwner(#recipe, #owner)")
+    public Recipe updateRawText(Recipe recipe, User owner, String newRawText) {
         final RecipeEntity entity = (RecipeEntity) recipe;
         entity.setCachedRenderedText(null);
         entity.setRawText(newRawText);
@@ -188,7 +190,8 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public Recipe setPublic(Recipe recipe, boolean isPublic) {
+    @PreAuthorize("@recipeSecurity.isOwner(#recipe, #owner)")
+    public Recipe setPublic(Recipe recipe, User owner, boolean isPublic) {
         final RecipeEntity entity = (RecipeEntity) recipe;
         entity.setPublic(isPublic);
         return this.recipeRepository.save(entity);
@@ -266,12 +269,14 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public void deleteRecipe(Recipe recipe) {
+    @PreAuthorize("@recipeSecurity.isOwner(#recipe, #owner)")
+    public void deleteRecipe(Recipe recipe, User owner) {
         this.recipeRepository.delete((RecipeEntity) recipe);
     }
 
     @Override
-    public void deleteById(long id) {
+    @PreAuthorize("@recipeSecurity.isOwner(#id, #owner)")
+    public void deleteById(long id, User owner) {
         this.recipeRepository.deleteById(id);
     }
 

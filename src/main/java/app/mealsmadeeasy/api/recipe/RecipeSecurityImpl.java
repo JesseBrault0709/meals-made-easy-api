@@ -20,6 +20,15 @@ public class RecipeSecurityImpl implements RecipeSecurity {
     }
 
     @Override
+    public boolean isOwner(long recipeId, User user) throws RecipeException {
+        final Recipe recipe = this.recipeRepository.findById(recipeId).orElseThrow(() -> new RecipeException(
+                RecipeException.Type.INVALID_ID,
+                "No such Recipe with id " + recipeId
+        ));
+        return this.isOwner(recipe, user);
+    }
+
+    @Override
     public boolean isViewableBy(Recipe recipe, User user) {
         if (Objects.equals(recipe.getOwner().getId(), user.getId())) {
             return true;
