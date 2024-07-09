@@ -28,4 +28,10 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
     @EntityGraph(attributePaths = { "stars" })
     Optional<RecipeEntity> findByIdWithStars(long id);
 
+    @Query("SELECT size(r.stars) FROM Recipe r WHERE r.id = ?1")
+    int getStarCount(long recipeId);
+
+    @Query("SELECT size(r.viewers) FROM Recipe r WHERE r.id = ?1")
+    int getViewerCount(long recipeId);
+
 }

@@ -35,7 +35,7 @@ public class RecipeControllerTests {
     }
 
     private Recipe createTestRecipe(User owner) {
-        return this.recipeService.create(owner, "Test Recipe", "Hello, World!");
+        return this.recipeService.create(owner, "Test Recipe", "# Hello, World!");
     }
 
     @Test
@@ -46,7 +46,12 @@ public class RecipeControllerTests {
         this.mockMvc.perform(get("/recipe/{id}", recipe.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.title").value("Test Recipe"));
+                .andExpect(jsonPath("$.title").value("Test Recipe"))
+                .andExpect(jsonPath("$.text").value("<h1>Hello, World!</h1>"))
+                .andExpect(jsonPath("$.ownerId").value(owner.getId()))
+                .andExpect(jsonPath("$.ownerUsername").value(owner.getUsername()))
+                .andExpect(jsonPath("$.starCount").value(0))
+                .andExpect(jsonPath("$.viewerCount").value(0));
     }
 
 }

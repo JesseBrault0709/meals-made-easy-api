@@ -1,7 +1,7 @@
 package app.mealsmadeeasy.api.recipe;
 
 import app.mealsmadeeasy.api.recipe.view.RecipeExceptionView;
-import app.mealsmadeeasy.api.recipe.view.RecipeGetView;
+import app.mealsmadeeasy.api.recipe.view.RecipePageView;
 import app.mealsmadeeasy.api.user.User;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,15 +26,9 @@ public class RecipeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RecipeGetView> getById(@PathVariable long id, @AuthenticationPrincipal User user)
+    public ResponseEntity<RecipePageView> getById(@PathVariable long id, @AuthenticationPrincipal User user)
             throws RecipeException {
-        final Recipe recipe;
-        if (user != null) {
-            recipe = this.recipeService.getById(id, user);
-        } else {
-            recipe = this.recipeService.getById(id);
-        }
-        return ResponseEntity.ok(new RecipeGetView(recipe.getId(), recipe.getTitle()));
+        return ResponseEntity.ok(this.recipeService.getPageViewById(id, user));
     }
 
 }

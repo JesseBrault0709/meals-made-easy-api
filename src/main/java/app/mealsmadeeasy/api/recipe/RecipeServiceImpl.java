@@ -6,11 +6,13 @@ import app.mealsmadeeasy.api.recipe.comment.RecipeCommentRepository;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
 import app.mealsmadeeasy.api.recipe.star.RecipeStarEntity;
 import app.mealsmadeeasy.api.recipe.star.RecipeStarRepository;
+import app.mealsmadeeasy.api.recipe.view.RecipePageView;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
 import app.mealsmadeeasy.api.user.UserRepository;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -82,7 +84,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @PostAuthorize("returnObject.isPublic || @recipeSecurity.isViewableBy(returnObject, #viewer)")
+    @PostAuthorize("@recipeSecurity.isViewableBy(returnObject, #viewer)")
     public Recipe getById(long id, User viewer) throws RecipeException {
         return this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
@@ -100,12 +102,29 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @PostAuthorize("returnObject.isPublic || @recipeSecurity.isViewableBy(returnObject, #viewer)")
+    @PostAuthorize("@recipeSecurity.isViewableBy(returnObject, #viewer)")
     public Recipe getByIdWithStars(long id, User viewer) throws RecipeException {
         return this.recipeRepository.findByIdWithStars(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
                 "No such recipe for id " + id
         ));
+    }
+
+    @Override
+    @PostAuthorize("@recipeSecurity.isViewableBy(#id, #viewer)")
+    public RecipePageView getPageViewById(long id, @Nullable User viewer) throws RecipeException {
+        final Recipe recipe = this.recipeRepository.getReferenceById(id);
+        final RecipePageView view = new RecipePageView();
+        view.setId(recipe.getId());
+        view.setCreated(recipe.getCreated());
+        view.setModified(recipe.getModified());
+        view.setTitle(recipe.getTitle());
+        view.setText(this.getRenderedMarkdown(recipe, viewer));
+        view.setOwnerId(recipe.getOwner().getId());
+        view.setOwnerUsername(recipe.getOwner().getUsername());
+        view.setStarCount(this.getStarCount(recipe, viewer));
+        view.setViewerCount(this.getViewerCount(recipe, viewer));
+        return view;
     }
 
     @Override
@@ -136,7 +155,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @PreAuthorize("#recipe.isPublic || @recipeSecurity.isViewableBy(#recipe, #viewer)")
+    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #viewer)")
     public String getRenderedMarkdown(Recipe recipe, User viewer) {
         RecipeEntity entity = (RecipeEntity) recipe;
         if (entity.getCachedRenderedText() == null) {
@@ -164,7 +183,7 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @PreAuthorize("#recipe.isPublic || @recipeSecurity.isViewableBy(#recipe, #giver)")
+    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #giver)")
     public RecipeStar addStar(Recipe recipe, User giver) {
         final RecipeStarEntity star = new RecipeStarEntity();
         star.setOwner((UserEntity) giver);
@@ -187,6 +206,12 @@ public class RecipeServiceImpl implements RecipeService {
                         "No such star for user " + giver.getUsername() + " and recipe " + recipe.getId()
                 ));
         this.recipeStarRepository.delete(star);
+    }
+
+    @Override
+    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #viewer)")
+    public int getStarCount(Recipe recipe, @Nullable User viewer) {
+        return this.recipeRepository.getStarCount(recipe.getId());
     }
 
     @Override
@@ -220,6 +245,12 @@ public class RecipeServiceImpl implements RecipeService {
         final RecipeEntity entity = (RecipeEntity) recipe;
         entity.setViewers(new HashSet<>());
         return this.recipeRepository.save(entity);
+    }
+
+    @Override
+    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #viewer)")
+    public int getViewerCount(Recipe recipe, User viewer) {
+        return this.recipeRepository.getViewerCount(recipe.getId());
     }
 
     @Override

@@ -2,7 +2,9 @@ package app.mealsmadeeasy.api.recipe;
 
 import app.mealsmadeeasy.api.recipe.comment.RecipeComment;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
+import app.mealsmadeeasy.api.recipe.view.RecipePageView;
 import app.mealsmadeeasy.api.user.User;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -16,6 +18,8 @@ public interface RecipeService {
 
     Recipe getByIdWithStars(long id) throws RecipeException;
     Recipe getByIdWithStars(long id, User viewer) throws RecipeException;
+
+    RecipePageView getPageViewById(long id, @Nullable User viewer) throws RecipeException;
 
     List<Recipe> getByMinimumStars(long minimumStars);
     List<Recipe> getByMinimumStars(long minimumStars, User viewer);
@@ -33,12 +37,14 @@ public interface RecipeService {
     RecipeStar addStar(Recipe recipe, User giver) throws RecipeException;
     void deleteStarByUser(Recipe recipe, User giver) throws RecipeException;
     void deleteStar(RecipeStar recipeStar);
+    int getStarCount(Recipe recipe, @Nullable User viewer);
 
     Recipe setPublic(Recipe recipe, User owner, boolean isPublic);
 
     Recipe addViewer(Recipe recipe, User user);
     Recipe removeViewer(Recipe recipe, User user);
     Recipe clearViewers(Recipe recipe);
+    int getViewerCount(Recipe recipe, @Nullable User viewer);
 
     RecipeComment getCommentById(long id) throws RecipeException;
     RecipeComment addComment(Recipe recipe, String rawCommentText, User commenter);
