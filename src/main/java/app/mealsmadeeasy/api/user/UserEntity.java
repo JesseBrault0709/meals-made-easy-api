@@ -177,7 +177,7 @@ public final class UserEntity implements User {
 
     @Override
     public String toString() {
-        return "User(" + this.id + ", " + this.username + ", " + this.email + ")";
+        return "UserEntity(" + this.id + ", " + this.username + ", " + this.email + ")";
     }
 
 }

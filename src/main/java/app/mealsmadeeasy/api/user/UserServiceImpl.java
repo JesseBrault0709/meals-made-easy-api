@@ -41,6 +41,11 @@ public final class UserServiceImpl implements UserService {
     }
 
     @Override
+    public User getUser(String username) {
+        return this.userRepository.getByUsername(username);
+    }
+
+    @Override
     public User updateUser(User user) {
         return this.userRepository.save((UserEntity) user);
     }

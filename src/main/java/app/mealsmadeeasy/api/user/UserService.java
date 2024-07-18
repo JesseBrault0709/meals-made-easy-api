@@ -11,6 +11,8 @@ public interface UserService {
         return this.createUser(username, email, rawPassword, Set.of());
     }
 
+    User getUser(String username);
+
     User updateUser(User user);
     void deleteUser(User user);
     void deleteUser(String username);
