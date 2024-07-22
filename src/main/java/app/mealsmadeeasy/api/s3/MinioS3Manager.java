@@ -23,6 +23,22 @@ public class MinioS3Manager implements S3Manager {
     private String secretKey;
 
     @Override
+    public InputStream load(String bucket, String objectName) throws IOException {
+        try (final MinioClient client = MinioClient.builder()
+                .endpoint(this.endpoint)
+                .credentials(this.accessKey, this.secretKey)
+                .build()
+        ) {
+            return client.getObject(GetObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(objectName)
+                    .build());
+        } catch (Exception e) {
+            throw new IOException(e);
+        }
+    }
+
+    @Override
     public String store(
             String bucketName,
             String filename,

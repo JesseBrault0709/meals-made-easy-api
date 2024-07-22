@@ -5,6 +5,11 @@ import java.io.InputStream;
 
 public interface S3Manager {
 
+    InputStream load(
+            String bucket,
+            String objectName
+    ) throws IOException;
+
     /**
      * @param bucket the target bucket in which to store the content
      * @param filename the filename to store, usually a uuid + appropriate extension

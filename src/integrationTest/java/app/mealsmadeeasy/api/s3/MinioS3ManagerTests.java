@@ -36,14 +36,36 @@ public class MinioS3ManagerTests {
     @Test
     public void simpleStore() {
         try (final InputStream hal9000 = MinioS3ManagerTests.class.getResourceAsStream("HAL9000.svg")) {
-            final String result = this.s3Manager.store(
+            final String objectName = this.s3Manager.store(
                     "test-images",
                     "HAL9000.svg",
                     "image/svg+xml",
                     hal9000,
                     27881L
             );
-            assertEquals("HAL9000.svg", result);
+            assertEquals("HAL9000.svg", objectName);
+        } catch (IOException ioException) {
+            throw new RuntimeException(ioException);
+        }
+    }
+
+    @Test
+    public void simpleLoad() {
+        try (final InputStream hal9000 = MinioS3ManagerTests.class.getResourceAsStream("HAL9000.svg")) {
+            if (hal9000 == null) {
+                throw new RuntimeException("HAL9000.svg could not be found");
+            }
+            final String objectName = this.s3Manager.store(
+                    "test-images",
+                    "HAL9000.svg",
+                    "image/svg+xml",
+                    hal9000,
+                    27881L
+            );
+            try (final InputStream loadedObject = this.s3Manager.load("test-images", objectName)) {
+                final byte[] stored = loadedObject.readAllBytes();
+                assertEquals(27881L, stored.length);
+            }
         } catch (IOException ioException) {
             throw new RuntimeException(ioException);
         }
