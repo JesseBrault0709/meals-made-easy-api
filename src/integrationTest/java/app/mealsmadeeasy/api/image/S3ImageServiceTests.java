@@ -41,6 +41,10 @@ public class S3ImageServiceTests {
         registry.add("app.mealsmadeeasy.api.minio.secretKey", container::getPassword);
     }
 
+    private static InputStream getHal9000() {
+        return S3ImageServiceTests.class.getResourceAsStream("HAL9000.svg");
+    }
+
     @Autowired
     private UserService userService;
 
@@ -61,7 +65,7 @@ public class S3ImageServiceTests {
     @Test
     @DirtiesContext
     public void simpleCreate() {
-        try (final InputStream hal9000 = S3ImageServiceTests.class.getResourceAsStream("HAL9000.svg")) {
+        try (final InputStream hal9000 = getHal9000()) {
             final User owner = this.createTestUser("imageOwner");
             final Image image = this.imageService.create(
                     owner,
@@ -80,6 +84,71 @@ public class S3ImageServiceTests {
             assertThat(image.getInternalUrl(), is(notNullValue()));
             assertThat(image.isPublic(), is(false));
             assertThat(image.getViewers(), is(empty()));
+        } catch (IOException | ImageException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @DirtiesContext
+    public void loadImageWithOwner() {
+        try (final InputStream hal9000 = getHal9000()) {
+            final User owner = this.createTestUser("imageOwner");
+            final Image image = this.imageService.create(
+                    owner,
+                    "HAL9000.svg",
+                    hal9000,
+                    "image/svg+xml",
+                    27881L
+            );
+            try (final InputStream stored = this.imageService.getImageContentById(image.getId(), owner)) {
+                final byte[] storedBytes = stored.readAllBytes();
+                assertThat(storedBytes.length, is(27881));
+            }
+        } catch (IOException | ImageException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void loadPublicImage() {
+        try (final InputStream hal9000 = getHal9000()) {
+            final User owner = this.createTestUser("imageOwner");
+            Image image = this.imageService.create(
+                    owner,
+                    "HAL9000.svg",
+                    hal9000,
+                    "image/svg+xml",
+                    27881L
+            );
+            image = this.imageService.setPublic(image, owner, true);
+            try (final InputStream stored = this.imageService.getImageContentById(image.getId())) {
+                final byte[] storedBytes = stored.readAllBytes();
+                assertThat(storedBytes.length, is(27881));
+            }
+        } catch (IOException | ImageException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    @DirtiesContext
+    public void loadImageWithViewer() {
+        try (final InputStream hal9000 = getHal9000()) {
+            final User owner = this.createTestUser("imageOwner");
+            final User viewer = this.createTestUser("imageViewer");
+            Image image = this.imageService.create(
+                    owner,
+                    "HAL9000.svg",
+                    hal9000,
+                    "image/svg+xml",
+                    27881L
+            );
+            image = this.imageService.addViewer(image, owner, viewer);
+            try (final InputStream stored = this.imageService.getImageContentById(image.getId(), viewer)) {
+                final byte[] storedBytes = stored.readAllBytes();
+                assertThat(storedBytes.length, is(27881));
+            }
         } catch (IOException | ImageException e) {
             throw new RuntimeException(e);
         }
