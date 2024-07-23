@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -89,7 +90,7 @@ public class S3ImageService implements ImageService {
 
     @Override
     public List<Image> getImagesOwnedBy(User user) {
-        return List.of();
+        return new ArrayList<>(this.imageRepository.findAllByOwner((UserEntity) user));
     }
 
     @Override

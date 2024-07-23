@@ -1,6 +1,5 @@
-package app.mealsmadeeasy.api.matchers;
+package app.mealsmadeeasy.api.user;
 
-import app.mealsmadeeasy.api.user.User;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
@@ -12,6 +11,10 @@ public final class IsUserMatcher extends BaseMatcher<User> {
 
     public IsUserMatcher(User expected) {
         this.expected = expected;
+    }
+
+    public static IsUserMatcher isUser(User expected) {
+        return new IsUserMatcher(expected);
     }
 
     @Override

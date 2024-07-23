@@ -1,6 +1,5 @@
-package app.mealsmadeeasy.api.matchers;
+package app.mealsmadeeasy.api.recipe;
 
-import app.mealsmadeeasy.api.recipe.Recipe;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
@@ -12,6 +11,10 @@ public class IsRecipeMatcher extends BaseMatcher<Recipe> {
 
     public IsRecipeMatcher(Recipe expected) {
         this.expected = expected;
+    }
+
+    public static IsRecipeMatcher isRecipe(Recipe expected) {
+        return new IsRecipeMatcher(expected);
     }
 
     @Override

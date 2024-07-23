@@ -1,5 +1,6 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.user.IsUserMatcher;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
@@ -12,7 +13,6 @@ import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
 
-import static app.mealsmadeeasy.api.matchers.Matchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
@@ -115,7 +115,7 @@ public class RecipeServiceTests {
         recipe = this.recipeService.setPublic(recipe, owner, true);
         final RecipeStar star = this.recipeService.addStar(recipe, owner);
         final Recipe byIdWithStars = this.recipeService.getByIdWithStars(recipe.getId());
-        assertThat(byIdWithStars.getStars(), containsStars(star));
+        assertThat(byIdWithStars.getStars(), ContainsRecipeStarsMatcher.containsStars(star));
     }
 
     @Test
@@ -174,9 +174,9 @@ public class RecipeServiceTests {
         assertThat(oneStar.size(), is(2));
         assertThat(twoStars.size(), is(1));
 
-        assertThat(zeroStars, containsRecipes(r0, r1, r2));
-        assertThat(oneStar, containsRecipes(r1, r2));
-        assertThat(twoStars, containsRecipes(r2));
+        assertThat(zeroStars, ContainsRecipesMatcher.containsRecipes(r0, r1, r2));
+        assertThat(oneStar, ContainsRecipesMatcher.containsRecipes(r1, r2));
+        assertThat(twoStars, ContainsRecipesMatcher.containsRecipes(r2));
     }
 
     @Test
@@ -223,9 +223,9 @@ public class RecipeServiceTests {
         assertThat(oneStarViewable.size(), is(2));
         assertThat(twoStarsViewable.size(), is (1));
 
-        assertThat(zeroStarsViewable, containsRecipes(r0, r1, r2));
-        assertThat(oneStarViewable, containsRecipes(r1, r2));
-        assertThat(twoStarsViewable, containsRecipes(r2));
+        assertThat(zeroStarsViewable, ContainsRecipesMatcher.containsRecipes(r0, r1, r2));
+        assertThat(oneStarViewable, ContainsRecipesMatcher.containsRecipes(r1, r2));
+        assertThat(twoStarsViewable, ContainsRecipesMatcher.containsRecipes(r2));
     }
 
     @Test
@@ -241,7 +241,7 @@ public class RecipeServiceTests {
 
         final List<Recipe> publicRecipes = this.recipeService.getPublicRecipes();
         assertThat(publicRecipes.size(), is(2));
-        assertThat(publicRecipes, containsRecipes(r0, r1));
+        assertThat(publicRecipes, ContainsRecipesMatcher.containsRecipes(r0, r1));
     }
 
     @Test
@@ -254,7 +254,7 @@ public class RecipeServiceTests {
         r0 = this.recipeService.addViewer(r0, viewer);
         final List<Recipe> viewableRecipes = this.recipeService.getRecipesViewableBy(viewer);
         assertThat(viewableRecipes.size(), is(1));
-        assertThat(viewableRecipes, containsRecipes(r0));
+        assertThat(viewableRecipes, ContainsRecipesMatcher.containsRecipes(r0));
     }
 
     @Test
@@ -264,7 +264,7 @@ public class RecipeServiceTests {
         final Recipe r0 = this.createTestRecipe(owner);
         final List<Recipe> ownedRecipes = this.recipeService.getRecipesOwnedBy(owner);
         assertThat(ownedRecipes.size(), is(1));
-        assertThat(ownedRecipes, containsRecipes(r0));
+        assertThat(ownedRecipes, ContainsRecipesMatcher.containsRecipes(r0));
     }
 
     @Test
@@ -318,7 +318,7 @@ public class RecipeServiceTests {
         final User secondOwner = this.createTestUser("secondOwner");
         Recipe recipe = this.createTestRecipe(firstOwner);
         recipe = this.recipeService.updateOwner(recipe, firstOwner, secondOwner);
-        assertThat(recipe.getOwner(), isUser(secondOwner));
+        assertThat(recipe.getOwner(), IsUserMatcher.isUser(secondOwner));
     }
 
     @Test
@@ -339,8 +339,8 @@ public class RecipeServiceTests {
         Recipe recipe = this.createTestRecipe(owner);
         recipe = this.recipeService.addViewer(recipe, starer);
         final RecipeStar star = this.recipeService.addStar(recipe, starer);
-        assertThat(star.getRecipe(), isRecipe(recipe));
-        assertThat(star.getOwner(), isUser(starer));
+        assertThat(star.getRecipe(), IsRecipeMatcher.isRecipe(recipe));
+        assertThat(star.getOwner(), IsUserMatcher.isUser(starer));
     }
 
     @Test
