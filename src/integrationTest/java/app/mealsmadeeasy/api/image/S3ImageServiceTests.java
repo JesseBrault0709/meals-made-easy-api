@@ -30,6 +30,8 @@ import static org.hamcrest.Matchers.notNullValue;
 @SpringBootTest
 public class S3ImageServiceTests {
 
+    private static final String USER_FILENAME = "HAL9000.svg";
+
     @Container
     private static final MinIOContainer container = new MinIOContainer(
             DockerImageName.parse("minio/minio:latest")
@@ -65,7 +67,7 @@ public class S3ImageServiceTests {
         try (final InputStream hal9000 = getHal9000()) {
             return this.imageService.create(
                     owner,
-                    "HAL9000.svg",
+                    USER_FILENAME,
                     hal9000,
                     "image/svg+xml",
                     27881L
@@ -88,7 +90,6 @@ public class S3ImageServiceTests {
         assertThat(image.getMimeType(), is("image/svg+xml"));
         assertThat(image.getAlt(), is(nullValue()));
         assertThat(image.getCaption(), is(nullValue()));
-        assertThat(image.getInternalUrl(), is(notNullValue()));
         assertThat(image.isPublic(), is(false));
         assertThat(image.getViewers(), is(empty()));
     }
@@ -98,18 +99,21 @@ public class S3ImageServiceTests {
     public void loadImageWithOwner() throws ImageException, IOException {
         final User owner = this.createTestUser("imageOwner");
         final Image image = this.createHal9000(owner);
-        try (final InputStream stored = this.imageService.getImageContentById(image.getId(), owner)) {
+        try (final InputStream stored =
+                     this.imageService.getImageContentByOwnerAndFilename(owner, owner, image.getUserFilename())) {
             final byte[] storedBytes = stored.readAllBytes();
             assertThat(storedBytes.length, is(27881));
         }
     }
 
     @Test
+    @DirtiesContext
     public void loadPublicImage() throws ImageException, IOException {
         final User owner = this.createTestUser("imageOwner");
         Image image = this.createHal9000(owner);
         image = this.imageService.setPublic(image, owner, true);
-        try (final InputStream stored = this.imageService.getImageContentById(image.getId())) {
+        try (final InputStream stored =
+                     this.imageService.getImageContentByOwnerAndFilename(owner, image.getUserFilename())) {
             final byte[] storedBytes = stored.readAllBytes();
             assertThat(storedBytes.length, is(27881));
         }
@@ -122,7 +126,8 @@ public class S3ImageServiceTests {
         final User viewer = this.createTestUser("imageViewer");
         Image image = this.createHal9000(owner);
         image = this.imageService.addViewer(image, owner, viewer);
-        try (final InputStream stored = this.imageService.getImageContentById(image.getId(), viewer)) {
+        try (final InputStream stored =
+                     this.imageService.getImageContentByOwnerAndFilename(viewer, owner, image.getUserFilename())) {
             final byte[] storedBytes = stored.readAllBytes();
             assertThat(storedBytes.length, is(27881));
         }

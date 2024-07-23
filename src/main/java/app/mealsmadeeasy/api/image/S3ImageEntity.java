@@ -10,7 +10,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity(name = "Image")
-public class ImageEntity implements Image {
+public class S3ImageEntity implements Image {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -34,9 +34,6 @@ public class ImageEntity implements Image {
 
     @Column(nullable = false)
     private String objectName;
-
-    @Column(nullable = false)
-    private String internalUrl;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
@@ -111,22 +108,12 @@ public class ImageEntity implements Image {
         this.caption = caption;
     }
 
-    @Override
     public String getObjectName() {
         return this.objectName;
     }
 
     public void setObjectName(String objectName) {
         this.objectName = objectName;
-    }
-
-    @Override
-    public String getInternalUrl() {
-        return this.internalUrl;
-    }
-
-    public void setInternalUrl(String internalUrl) {
-        this.internalUrl = internalUrl;
     }
 
     @Override
@@ -158,7 +145,7 @@ public class ImageEntity implements Image {
 
     @Override
     public String toString() {
-        return "ImageEntity(" + this.id + ", " + this.internalUrl + ")";
+        return "S3ImageEntity(" + this.id + ", " + this.userFilename + "," + this.objectName + ")";
     }
 
 }

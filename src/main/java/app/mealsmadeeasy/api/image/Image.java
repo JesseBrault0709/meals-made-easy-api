@@ -15,8 +15,6 @@ public interface Image {
     String getMimeType();
     @Nullable String getAlt();
     @Nullable String getCaption();
-    String getObjectName();
-    String getInternalUrl();
     User getOwner();
     boolean isPublic();
     Set<UserEntity> getViewers();

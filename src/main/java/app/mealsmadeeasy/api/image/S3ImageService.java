@@ -18,12 +18,12 @@ import java.util.UUID;
 public class S3ImageService implements ImageService {
 
     private final S3Manager s3Manager;
-    private final ImageRepository imageRepository;
+    private final S3ImageRepository imageRepository;
     private final String imageBucketName;
 
     public S3ImageService(
             S3Manager s3Manager,
-            ImageRepository imageRepository,
+            S3ImageRepository imageRepository,
             @Value("${app.mealsmadeeasy.api.images.bucketName}") String imageBucketName
     ) {
         this.s3Manager = s3Manager;
@@ -51,12 +51,11 @@ public class S3ImageService implements ImageService {
                 this.imageBucketName, filename, mimeType, inputStream, objectSize
         );
 
-        final ImageEntity draft = new ImageEntity();
+        final S3ImageEntity draft = new S3ImageEntity();
         draft.setOwner((UserEntity) owner);
         draft.setUserFilename(userFilename);
         draft.setMimeType(mimeType);
         draft.setObjectName(objectName);
-        draft.setInternalUrl(this.s3Manager.getUrl(this.imageBucketName, objectName));
         return this.imageRepository.save(draft);
     }
 
@@ -77,15 +76,26 @@ public class S3ImageService implements ImageService {
     }
 
     @Override
-    public InputStream getImageContentById(long id) throws IOException, ImageException {
-        final Image image = this.getById(id);
-        return this.s3Manager.load(this.imageBucketName, image.getObjectName());
+    @PostAuthorize("@imageSecurity.isViewableBy(returnObject, #viewer)")
+    public Image getByOwnerAndFilename(User viewer, User owner, String filename) throws ImageException {
+        return this.imageRepository.findByOwnerAndUserFilename((UserEntity) owner, filename)
+                .orElseThrow(() -> new ImageException(
+                        ImageException.Type.IMAGE_NOT_FOUND,
+                        "No such image for owner " + owner + " with filename " + filename
+                ));
     }
 
     @Override
-    public InputStream getImageContentById(long id, User viewer) throws IOException, ImageException {
-        final Image image = this.getById(id, viewer);
-        return this.s3Manager.load(this.imageBucketName, image.getObjectName());
+    public InputStream getImageContentByOwnerAndFilename(User viewer, User owner, String filename)
+            throws ImageException, IOException {
+        final S3ImageEntity imageEntity = (S3ImageEntity) this.getByOwnerAndFilename(viewer, owner, filename);
+        return this.s3Manager.load(this.imageBucketName, imageEntity.getObjectName());
+    }
+
+    @Override
+    public InputStream getImageContentByOwnerAndFilename(User owner, String filename) throws ImageException, IOException {
+        final S3ImageEntity imageEntity = (S3ImageEntity) this.getByOwnerAndFilename(null, owner, filename);
+        return this.s3Manager.load(this.imageBucketName, imageEntity.getObjectName());
     }
 
     @Override
@@ -96,7 +106,7 @@ public class S3ImageService implements ImageService {
     @Override
     @PreAuthorize("@imageSecurity.isOwner(#image, #oldOwner)")
     public Image updateOwner(Image image, User oldOwner, User newOwner) {
-        final ImageEntity imageEntity = (ImageEntity) image;
+        final S3ImageEntity imageEntity = (S3ImageEntity) image;
         imageEntity.setOwner((UserEntity) newOwner);
         return this.imageRepository.save(imageEntity);
     }
@@ -104,7 +114,7 @@ public class S3ImageService implements ImageService {
     @Override
     @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image setAlt(Image image, User owner, String alt) {
-        final ImageEntity imageEntity = (ImageEntity) image;
+        final S3ImageEntity imageEntity = (S3ImageEntity) image;
         imageEntity.setAlt(alt);
         return this.imageRepository.save(imageEntity);
     }
@@ -112,7 +122,7 @@ public class S3ImageService implements ImageService {
     @Override
     @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image setCaption(Image image, User owner, String caption) {
-        final ImageEntity imageEntity = (ImageEntity) image;
+        final S3ImageEntity imageEntity = (S3ImageEntity) image;
         imageEntity.setCaption(caption);
         return this.imageRepository.save(imageEntity);
     }
@@ -120,7 +130,7 @@ public class S3ImageService implements ImageService {
     @Override
     @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image setPublic(Image image, User owner, boolean isPublic) {
-        final ImageEntity imageEntity = (ImageEntity) image;
+        final S3ImageEntity imageEntity = (S3ImageEntity) image;
         imageEntity.setPublic(isPublic);
         return this.imageRepository.save(imageEntity);
     }
@@ -128,7 +138,7 @@ public class S3ImageService implements ImageService {
     @Override
     @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image addViewer(Image image, User owner, User viewer) {
-        final ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
+        final S3ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
         withViewers.getViewers().add((UserEntity) viewer);
         return this.imageRepository.save(withViewers);
     }
@@ -136,7 +146,7 @@ public class S3ImageService implements ImageService {
     @Override
     @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image removeViewer(Image image, User owner, User viewer) {
-        final ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
+        final S3ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
         withViewers.getViewers().remove((UserEntity) viewer);
         return this.imageRepository.save(withViewers);
     }
@@ -144,7 +154,7 @@ public class S3ImageService implements ImageService {
     @Override
     @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image clearViewers(Image image, User owner) {
-        final ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
+        final S3ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
         withViewers.getViewers().clear();
         return this.imageRepository.save(withViewers);
     }
@@ -152,14 +162,9 @@ public class S3ImageService implements ImageService {
     @Override
     @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public void deleteImage(Image image, User owner) throws IOException {
-        this.imageRepository.delete((ImageEntity) image);
-        this.s3Manager.delete("images", image.getObjectName());
-    }
-
-    @Override
-    public void deleteById(long id, User owner) throws IOException {
-        final ImageEntity toDelete = this.imageRepository.getReferenceById(id);
-        this.deleteImage(toDelete, owner);
+        final S3ImageEntity imageEntity = (S3ImageEntity) image;
+        this.imageRepository.delete(imageEntity);
+        this.s3Manager.delete("images", imageEntity.getObjectName());
     }
 
 }

@@ -13,9 +13,10 @@ public interface ImageService {
 
     Image getById(long id) throws ImageException;
     Image getById(long id, User viewer) throws ImageException;
+    Image getByOwnerAndFilename(User viewer, User owner, String filename) throws ImageException;
 
-    InputStream getImageContentById(long id) throws IOException, ImageException;
-    InputStream getImageContentById(long id, User viewer) throws IOException, ImageException;
+    InputStream getImageContentByOwnerAndFilename(User owner, String filename) throws ImageException, IOException;
+    InputStream getImageContentByOwnerAndFilename(User viewer, User owner, String filename) throws ImageException, IOException;
 
     List<Image> getImagesOwnedBy(User user);
 
@@ -30,6 +31,5 @@ public interface ImageService {
     Image clearViewers(Image image, User owner);
 
     void deleteImage(Image image, User owner) throws IOException;
-    void deleteById(long id, User owner) throws IOException;
 
 }

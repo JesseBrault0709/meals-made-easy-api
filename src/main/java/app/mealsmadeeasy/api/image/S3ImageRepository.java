@@ -6,13 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface ImageRepository extends JpaRepository<ImageEntity, Long> {
+public interface S3ImageRepository extends JpaRepository<S3ImageEntity, Long> {
 
     @Query("SELECT image FROM Image image WHERE image.id = ?1")
     @EntityGraph(attributePaths = { "viewers" })
-    ImageEntity getByIdWithViewers(long id);
+    S3ImageEntity getByIdWithViewers(long id);
 
-    List<ImageEntity> findAllByOwner(UserEntity owner);
+    List<S3ImageEntity> findAllByOwner(UserEntity owner);
+    Optional<S3ImageEntity> findByOwnerAndUserFilename(UserEntity owner, String filename);
 
 }

@@ -9,9 +9,9 @@ import java.util.Objects;
 @Component("imageSecurity")
 public class ImageSecurityImpl implements ImageSecurity {
 
-    private final ImageRepository imageRepository;
+    private final S3ImageRepository imageRepository;
 
-    public ImageSecurityImpl(ImageRepository imageRepository) {
+    public ImageSecurityImpl(S3ImageRepository imageRepository) {
         this.imageRepository = imageRepository;
     }
 
@@ -28,7 +28,7 @@ public class ImageSecurityImpl implements ImageSecurity {
             return true;
         } else {
             // check if viewer
-            final ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
+            final S3ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
             for (final User user : withViewers.getViewers()) {
                 if (user.getId() != null && user.getId().equals(viewer.getId())) {
                     return true;
