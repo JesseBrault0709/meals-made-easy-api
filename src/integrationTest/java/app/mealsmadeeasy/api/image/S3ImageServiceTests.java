@@ -71,6 +71,18 @@ public class S3ImageServiceTests {
         );
     }
 
+    private Image createHal9000(User owner) throws ImageException, IOException {
+        try (final InputStream hal9000 = getHal9000()) {
+            return this.imageService.create(
+                    owner,
+                    "HAL9000.svg",
+                    hal9000,
+                    "image/svg+xml",
+                    27881L
+            );
+        }
+    }
+
     @Test
     public void smokeScreen() {}
 
@@ -168,6 +180,46 @@ public class S3ImageServiceTests {
         }
     }
 
+    @Test
+    @DirtiesContext
+    public void updateOwner() {
+        try (final InputStream hal9000 = getHal9000()) {
+            final User oldOwner = this.createTestUser("oldImageOwner");
+            final User newOwner = this.createTestUser("newImageOwner");
+            Image image = this.createHal9000(oldOwner, hal9000);
+            assertThat(image.getOwner(), isUser(oldOwner));
+            image = this.imageService.updateOwner(image, oldOwner, newOwner);
+            assertThat(image.getOwner(), isUser(newOwner));
+        } catch (ImageException | IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
+    @Test
+    @DirtiesContext
+    public void setAlt() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        Image image = this.createHal9000(owner);
+        image = this.imageService.setAlt(image, owner, "Example alt.");
+        assertThat(image.getAlt(), is("Example alt."));
+    }
+
+    @Test
+    @DirtiesContext
+    public void setCaption() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        Image image = this.createHal9000(owner);
+        image = this.imageService.setCaption(image, owner, "Example caption.");
+        assertThat(image.getCaption(), is("Example caption."));
+    }
+
+    @Test
+    @DirtiesContext
+    public void setPublicToTrue() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        Image image = this.createHal9000(owner);
+        image = this.imageService.setPublic(image, owner, true);
+        assertThat(image.isPublic(), is(true));
+    }
 
 }

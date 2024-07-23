@@ -94,18 +94,27 @@ public class S3ImageService implements ImageService {
     }
 
     @Override
+    @PreAuthorize("@imageSecurity.isOwner(#image, #oldOwner)")
     public Image updateOwner(Image image, User oldOwner, User newOwner) {
-        return null;
+        final ImageEntity imageEntity = (ImageEntity) image;
+        imageEntity.setOwner((UserEntity) newOwner);
+        return this.imageRepository.save(imageEntity);
     }
 
     @Override
+    @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image setAlt(Image image, User owner, String alt) {
-        return null;
+        final ImageEntity imageEntity = (ImageEntity) image;
+        imageEntity.setAlt(alt);
+        return this.imageRepository.save(imageEntity);
     }
 
     @Override
+    @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image setCaption(Image image, User owner, String caption) {
-        return null;
+        final ImageEntity imageEntity = (ImageEntity) image;
+        imageEntity.setCaption(caption);
+        return this.imageRepository.save(imageEntity);
     }
 
     @Override
@@ -117,6 +126,7 @@ public class S3ImageService implements ImageService {
     }
 
     @Override
+    @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image addViewer(Image image, User owner, User viewer) {
         final ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
         withViewers.getViewers().add((UserEntity) viewer);
@@ -124,6 +134,7 @@ public class S3ImageService implements ImageService {
     }
 
     @Override
+    @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image removeViewer(Image image, User owner, User viewer) {
         final ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
         withViewers.getViewers().remove((UserEntity) viewer);
@@ -131,6 +142,7 @@ public class S3ImageService implements ImageService {
     }
 
     @Override
+    @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public Image clearViewers(Image image, User owner) {
         final ImageEntity withViewers = this.imageRepository.getByIdWithViewers(image.getId());
         withViewers.getViewers().clear();
