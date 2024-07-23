@@ -141,7 +141,7 @@ public class S3ImageService implements ImageService {
     @PreAuthorize("@imageSecurity.isOwner(#image, #owner)")
     public void deleteImage(Image image, User owner) throws IOException {
         this.imageRepository.delete((ImageEntity) image);
-        this.s3Manager.delete("images", image.getObjectName()); // TODO
+        this.s3Manager.delete("images", image.getObjectName());
     }
 
     @Override
