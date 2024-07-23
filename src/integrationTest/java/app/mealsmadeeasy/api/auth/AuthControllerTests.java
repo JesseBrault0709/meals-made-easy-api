@@ -1,12 +1,17 @@
 package app.mealsmadeeasy.api.auth;
 
+import app.mealsmadeeasy.api.user.User;
+import app.mealsmadeeasy.api.user.UserCreateException;
+import app.mealsmadeeasy.api.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -30,6 +35,17 @@ public class AuthControllerTests {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private UserService userService;
+
+    private User createTestUser() {
+        try {
+            return this.userService.createUser("test", "test@test.com", "test");
+        } catch (UserCreateException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private MockHttpServletRequestBuilder getLoginRequest() throws Exception {
         final Map<String, ?> body = Map.of(
                 "username", "test",
@@ -41,7 +57,14 @@ public class AuthControllerTests {
                 .with(user("test").password("test"));
     }
 
+    @BeforeEach
+    public void setup() {
+        final User testUser = this.createTestUser();
+        System.out.println("Created testUser: " + testUser);
+    }
+
     @Test
+    @DirtiesContext
     public void simpleLogin() throws Exception {
         this.mockMvc.perform(this.getLoginRequest())
                 .andExpect(status().isOk())
@@ -60,6 +83,7 @@ public class AuthControllerTests {
     }
 
     @Test
+    @DirtiesContext
     public void simpleLogout() throws Exception {
         final MockHttpServletRequestBuilder req = post("/auth/logout")
                 .cookie(this.getRefreshTokenCookie());
@@ -69,6 +93,7 @@ public class AuthControllerTests {
     }
 
     @Test
+    @DirtiesContext
     public void simpleRefresh() throws Exception {
         final Cookie firstRefreshTokenCookie = this.getRefreshTokenCookie();
         final MockHttpServletRequestBuilder req = post("/auth/refresh")
