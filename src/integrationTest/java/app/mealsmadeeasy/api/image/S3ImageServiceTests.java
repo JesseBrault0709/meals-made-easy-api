@@ -61,16 +61,6 @@ public class S3ImageServiceTests {
         }
     }
 
-    private Image createHal9000(User owner, InputStream data) throws ImageException, IOException {
-        return this.imageService.create(
-                owner,
-                "HAL9000.svg",
-                data,
-                "image/svg+xml",
-                27881L
-        );
-    }
-
     private Image createHal9000(User owner) throws ImageException, IOException {
         try (final InputStream hal9000 = getHal9000()) {
             return this.imageService.create(
@@ -88,111 +78,83 @@ public class S3ImageServiceTests {
 
     @Test
     @DirtiesContext
-    public void simpleCreate() {
-        try (final InputStream hal9000 = getHal9000()) {
-            final User owner = this.createTestUser("imageOwner");
-            final Image image = this.createHal9000(owner, hal9000);
-            assertThat(image.getOwner(), isUser(owner));
-            assertThat(image.getCreated(), is(notNullValue()));
-            assertThat(image.getModified(), is(nullValue()));
-            assertThat(image.getUserFilename(), is("HAL9000.svg"));
-            assertThat(image.getMimeType(), is("image/svg+xml"));
-            assertThat(image.getAlt(), is(nullValue()));
-            assertThat(image.getCaption(), is(nullValue()));
-            assertThat(image.getInternalUrl(), is(notNullValue()));
-            assertThat(image.isPublic(), is(false));
-            assertThat(image.getViewers(), is(empty()));
-        } catch (IOException | ImageException e) {
-            throw new RuntimeException(e);
+    public void simpleCreate() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        final Image image = this.createHal9000(owner);
+        assertThat(image.getOwner(), isUser(owner));
+        assertThat(image.getCreated(), is(notNullValue()));
+        assertThat(image.getModified(), is(nullValue()));
+        assertThat(image.getUserFilename(), is("HAL9000.svg"));
+        assertThat(image.getMimeType(), is("image/svg+xml"));
+        assertThat(image.getAlt(), is(nullValue()));
+        assertThat(image.getCaption(), is(nullValue()));
+        assertThat(image.getInternalUrl(), is(notNullValue()));
+        assertThat(image.isPublic(), is(false));
+        assertThat(image.getViewers(), is(empty()));
+    }
+
+    @Test
+    @DirtiesContext
+    public void loadImageWithOwner() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        final Image image = this.createHal9000(owner);
+        try (final InputStream stored = this.imageService.getImageContentById(image.getId(), owner)) {
+            final byte[] storedBytes = stored.readAllBytes();
+            assertThat(storedBytes.length, is(27881));
+        }
+    }
+
+    @Test
+    public void loadPublicImage() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        Image image = this.createHal9000(owner);
+        image = this.imageService.setPublic(image, owner, true);
+        try (final InputStream stored = this.imageService.getImageContentById(image.getId())) {
+            final byte[] storedBytes = stored.readAllBytes();
+            assertThat(storedBytes.length, is(27881));
         }
     }
 
     @Test
     @DirtiesContext
-    public void loadImageWithOwner() {
-        try (final InputStream hal9000 = getHal9000()) {
-            final User owner = this.createTestUser("imageOwner");
-            final Image image = this.createHal9000(owner, hal9000);
-            try (final InputStream stored = this.imageService.getImageContentById(image.getId(), owner)) {
-                final byte[] storedBytes = stored.readAllBytes();
-                assertThat(storedBytes.length, is(27881));
-            }
-        } catch (IOException | ImageException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Test
-    public void loadPublicImage() {
-        try (final InputStream hal9000 = getHal9000()) {
-            final User owner = this.createTestUser("imageOwner");
-            Image image = this.createHal9000(owner, hal9000);
-            image = this.imageService.setPublic(image, owner, true);
-            try (final InputStream stored = this.imageService.getImageContentById(image.getId())) {
-                final byte[] storedBytes = stored.readAllBytes();
-                assertThat(storedBytes.length, is(27881));
-            }
-        } catch (IOException | ImageException e) {
-            throw new RuntimeException(e);
+    public void loadImageWithViewer() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        final User viewer = this.createTestUser("imageViewer");
+        Image image = this.createHal9000(owner);
+        image = this.imageService.addViewer(image, owner, viewer);
+        try (final InputStream stored = this.imageService.getImageContentById(image.getId(), viewer)) {
+            final byte[] storedBytes = stored.readAllBytes();
+            assertThat(storedBytes.length, is(27881));
         }
     }
 
     @Test
     @DirtiesContext
-    public void loadImageWithViewer() {
-        try (final InputStream hal9000 = getHal9000()) {
-            final User owner = this.createTestUser("imageOwner");
-            final User viewer = this.createTestUser("imageViewer");
-            Image image = this.createHal9000(owner, hal9000);
-            image = this.imageService.addViewer(image, owner, viewer);
-            try (final InputStream stored = this.imageService.getImageContentById(image.getId(), viewer)) {
-                final byte[] storedBytes = stored.readAllBytes();
-                assertThat(storedBytes.length, is(27881));
-            }
-        } catch (IOException | ImageException e) {
-            throw new RuntimeException(e);
-        }
+    public void getImagesOwnedBy() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        final User otherOwner = this.createTestUser("otherImageOwner");
+        final Image image0 = this.createHal9000(owner);
+        final Image image1 = this.createHal9000(owner);
+        final Image image2 = this.createHal9000(otherOwner);
+
+        final List<Image> ownedImages = this.imageService.getImagesOwnedBy(owner);
+        assertThat(ownedImages.size(), is(2));
+        assertThat(ownedImages, containsImages(image0, image1));
+
+        final List<Image> otherOwnedImages = this.imageService.getImagesOwnedBy(otherOwner);
+        assertThat(otherOwnedImages.size(), is(1));
+        assertThat(otherOwnedImages, containsImages(image2));
     }
 
     @Test
     @DirtiesContext
-    public void getImagesOwnedBy() {
-        try (
-                final InputStream hal9000_0 = getHal9000();
-                final InputStream hal9000_1 = getHal9000();
-                final InputStream hal9000_2 = getHal9000();
-                ) {
-            final User owner = this.createTestUser("imageOwner");
-            final User otherOwner = this.createTestUser("otherImageOwner");
-            final Image image0 = this.createHal9000(owner, hal9000_0);
-            final Image image1 = this.createHal9000(owner, hal9000_1);
-            final Image image2 = this.createHal9000(otherOwner, hal9000_2);
-
-            final List<Image> ownedImages = this.imageService.getImagesOwnedBy(owner);
-            assertThat(ownedImages.size(), is(2));
-            assertThat(ownedImages, containsImages(image0, image1));
-
-            final List<Image> otherOwnedImages = this.imageService.getImagesOwnedBy(otherOwner);
-            assertThat(otherOwnedImages.size(), is(1));
-            assertThat(otherOwnedImages, containsImages(image2));
-        } catch (IOException | ImageException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @Test
-    @DirtiesContext
-    public void updateOwner() {
-        try (final InputStream hal9000 = getHal9000()) {
-            final User oldOwner = this.createTestUser("oldImageOwner");
-            final User newOwner = this.createTestUser("newImageOwner");
-            Image image = this.createHal9000(oldOwner, hal9000);
-            assertThat(image.getOwner(), isUser(oldOwner));
-            image = this.imageService.updateOwner(image, oldOwner, newOwner);
-            assertThat(image.getOwner(), isUser(newOwner));
-        } catch (ImageException | IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void updateOwner() throws ImageException, IOException {
+        final User oldOwner = this.createTestUser("oldImageOwner");
+        final User newOwner = this.createTestUser("newImageOwner");
+        Image image = this.createHal9000(oldOwner);
+        assertThat(image.getOwner(), isUser(oldOwner));
+        image = this.imageService.updateOwner(image, oldOwner, newOwner);
+        assertThat(image.getOwner(), isUser(newOwner));
     }
 
     @Test
