@@ -60,24 +60,8 @@ public class S3ImageService implements ImageService {
     }
 
     @Override
-    @PostAuthorize("returnObject.isPublic")
-    public Image getById(long id) throws ImageException {
-        return this.imageRepository.findById(id).orElseThrow(() -> new ImageException(
-                ImageException.Type.INVALID_ID, "No such image with id " + id
-        ));
-    }
-
-    @Override
     @PostAuthorize("@imageSecurity.isViewableBy(returnObject, #viewer)")
-    public Image getById(long id, User viewer) throws ImageException {
-        return this.imageRepository.findById(id).orElseThrow(() -> new ImageException(
-                ImageException.Type.INVALID_ID, "No such image with id " + id
-        ));
-    }
-
-    @Override
-    @PostAuthorize("@imageSecurity.isViewableBy(returnObject, #viewer)")
-    public Image getByOwnerAndFilename(User viewer, User owner, String filename) throws ImageException {
+    public Image getByOwnerAndFilename(User owner, String filename, User viewer) throws ImageException {
         return this.imageRepository.findByOwnerAndUserFilename((UserEntity) owner, filename)
                 .orElseThrow(() -> new ImageException(
                         ImageException.Type.IMAGE_NOT_FOUND,
@@ -86,16 +70,9 @@ public class S3ImageService implements ImageService {
     }
 
     @Override
-    public InputStream getImageContentByOwnerAndFilename(User viewer, User owner, String filename)
-            throws ImageException, IOException {
-        final S3ImageEntity imageEntity = (S3ImageEntity) this.getByOwnerAndFilename(viewer, owner, filename);
-        return this.s3Manager.load(this.imageBucketName, imageEntity.getObjectName());
-    }
-
-    @Override
-    public InputStream getImageContentByOwnerAndFilename(User owner, String filename) throws ImageException, IOException {
-        final S3ImageEntity imageEntity = (S3ImageEntity) this.getByOwnerAndFilename(null, owner, filename);
-        return this.s3Manager.load(this.imageBucketName, imageEntity.getObjectName());
+    @PreAuthorize("@imageSecurity.isViewableBy(#image, #viewer)")
+    public InputStream getImageContent(Image image, User viewer) throws IOException {
+        return this.s3Manager.load(this.imageBucketName, ((S3ImageEntity) image).getObjectName());
     }
 
     @Override

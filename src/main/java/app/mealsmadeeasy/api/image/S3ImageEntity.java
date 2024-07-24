@@ -145,7 +145,7 @@ public class S3ImageEntity implements Image {
 
     @Override
     public String toString() {
-        return "S3ImageEntity(" + this.id + ", " + this.userFilename + "," + this.objectName + ")";
+        return "S3ImageEntity(" + this.id + ", " + this.userFilename + ", " + this.objectName + ")";
     }
 
 }

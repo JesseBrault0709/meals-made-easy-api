@@ -39,7 +39,6 @@ public class S3ImageServiceTests {
 
     @DynamicPropertySource
     public static void minioProperties(DynamicPropertyRegistry registry) {
-        registry.add("app.mealsmadeeasy.api.minio.bucketName", () -> "test-bucket");
         registry.add("app.mealsmadeeasy.api.minio.endpoint", container::getS3URL);
         registry.add("app.mealsmadeeasy.api.minio.accessKey", container::getUserName);
         registry.add("app.mealsmadeeasy.api.minio.secretKey", container::getPassword);
@@ -96,11 +95,11 @@ public class S3ImageServiceTests {
 
     @Test
     @DirtiesContext
-    public void loadImageWithOwner() throws ImageException, IOException {
+    public void loadImageWithOwnerAsViewer() throws ImageException, IOException {
         final User owner = this.createTestUser("imageOwner");
         final Image image = this.createHal9000(owner);
         try (final InputStream stored =
-                     this.imageService.getImageContentByOwnerAndFilename(owner, owner, image.getUserFilename())) {
+                     this.imageService.getImageContent(image, owner)) {
             final byte[] storedBytes = stored.readAllBytes();
             assertThat(storedBytes.length, is(27881));
         }
@@ -113,7 +112,7 @@ public class S3ImageServiceTests {
         Image image = this.createHal9000(owner);
         image = this.imageService.setPublic(image, owner, true);
         try (final InputStream stored =
-                     this.imageService.getImageContentByOwnerAndFilename(owner, image.getUserFilename())) {
+                     this.imageService.getImageContent(image, null)) {
             final byte[] storedBytes = stored.readAllBytes();
             assertThat(storedBytes.length, is(27881));
         }
@@ -127,7 +126,7 @@ public class S3ImageServiceTests {
         Image image = this.createHal9000(owner);
         image = this.imageService.addViewer(image, owner, viewer);
         try (final InputStream stored =
-                     this.imageService.getImageContentByOwnerAndFilename(viewer, owner, image.getUserFilename())) {
+                     this.imageService.getImageContent(image, viewer)) {
             final byte[] storedBytes = stored.readAllBytes();
             assertThat(storedBytes.length, is(27881));
         }

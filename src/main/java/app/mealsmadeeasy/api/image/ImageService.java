@@ -1,6 +1,7 @@
 package app.mealsmadeeasy.api.image;
 
 import app.mealsmadeeasy.api.user.User;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,13 +12,8 @@ public interface ImageService {
     Image create(User owner, String userFilename, InputStream inputStream, String mimeType, long objectSize)
             throws IOException, ImageException;
 
-    Image getById(long id) throws ImageException;
-    Image getById(long id, User viewer) throws ImageException;
-    Image getByOwnerAndFilename(User viewer, User owner, String filename) throws ImageException;
-
-    InputStream getImageContentByOwnerAndFilename(User owner, String filename) throws ImageException, IOException;
-    InputStream getImageContentByOwnerAndFilename(User viewer, User owner, String filename) throws ImageException, IOException;
-
+    Image getByOwnerAndFilename(User owner, String filename, User viewer) throws ImageException;
+    InputStream getImageContent(Image image, @Nullable User viewer) throws IOException;
     List<Image> getImagesOwnedBy(User user);
 
     Image updateOwner(Image image, User oldOwner, User newOwner);
