@@ -13,9 +13,13 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class S3ImageService implements ImageService {
+
+    private static final Pattern extensionPattern = Pattern.compile(".+\\.(.+)$");
 
     private final S3Manager s3Manager;
     private final S3ImageRepository imageRepository;
@@ -31,8 +35,25 @@ public class S3ImageService implements ImageService {
         this.imageBucketName = imageBucketName;
     }
 
+    private String getMimeType(String userFilename) {
+        final Matcher m = extensionPattern.matcher(userFilename);
+        if (m.matches()) {
+            final String extension = m.group(1);
+            return switch (extension) {
+                case "jpg", "jpeg" -> "image/jpeg";
+                case "png" -> "image/png";
+                case "svg" -> "image/svg+xml";
+                default -> throw new IllegalArgumentException("Cannot determine mime type for extension: " + extension);
+            };
+        } else {
+            throw new IllegalArgumentException("Cannot determine mime type for filename: " + userFilename);
+        }
+    }
+
     private String getExtension(String mimeType) throws ImageException {
         return switch (mimeType) {
+            case "image/jpeg" -> "jpg";
+            case "image/png" -> "png";
             case "image/svg+xml" -> "svg";
             default -> throw new ImageException(
                     ImageException.Type.UNKNOWN_MIME_TYPE,
@@ -42,8 +63,9 @@ public class S3ImageService implements ImageService {
     }
 
     @Override
-    public Image create(User owner, String userFilename, InputStream inputStream, String mimeType, long objectSize)
+    public Image create(User owner, String userFilename, InputStream inputStream, long objectSize)
             throws IOException, ImageException {
+        final String mimeType = this.getMimeType(userFilename);
         final String uuid = UUID.randomUUID().toString();
         final String extension = this.getExtension(mimeType);
         final String filename = uuid + "." + extension;

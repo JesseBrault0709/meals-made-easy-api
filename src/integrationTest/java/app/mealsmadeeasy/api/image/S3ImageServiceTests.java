@@ -68,7 +68,6 @@ public class S3ImageServiceTests {
                     owner,
                     USER_FILENAME,
                     hal9000,
-                    "image/svg+xml",
                     27881L
             );
         }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -21,7 +22,9 @@ import org.testcontainers.utility.DockerImageName;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Testcontainers
@@ -73,7 +76,6 @@ public class ImageControllerTests {
                     owner,
                     USER_FILENAME,
                     hal9000,
-                    "image/svg+xml",
                     27881L
             );
         }
@@ -131,6 +133,41 @@ public class ImageControllerTests {
         this.imageService.addViewer(image, owner, viewer);
         final String accessToken = this.getAccessToken(viewer.getUsername());
         this.doGetImageTestWithViewer(accessToken);
+    }
+
+    @Test
+    @DirtiesContext
+    public void putImage() throws Exception {
+        final User owner = this.createTestUser("imageOwner");
+        final String accessToken = this.getAccessToken(owner.getUsername());
+        try (final InputStream hal9000 = getHal9000()) {
+            final MockMultipartFile mockMultipartFile = new MockMultipartFile(
+                    "image", "HAL9000.svg", "image/svg+xml", hal9000
+            );
+            this.mockMvc.perform(
+                    multipart("/images")
+                            .file(mockMultipartFile)
+                            .param("filename", "HAL9000.svg")
+                            .param("alt", "HAL 9000")
+                            .param("caption", "HAL 9000, from 2001: A Space Odyssey")
+                            .param("isPublic", "true")
+                            .header("Authorization", "Bearer " + accessToken)
+                            .with(req -> {
+                                req.setMethod("PUT");
+                                return req;
+                            })
+            )
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.created").exists())
+                    .andExpect(jsonPath("$.modified").value(nullValue()))
+                    .andExpect(jsonPath("$.filename").value(USER_FILENAME))
+                    .andExpect(jsonPath("$.mimeType").value("image/svg+xml"))
+                    .andExpect(jsonPath("$.alt").value("HAL 9000"))
+                    .andExpect(jsonPath("$.caption").value("HAL 9000, from 2001: A Space Odyssey"))
+                    .andExpect(jsonPath("$.isPublic").value(true))
+                    .andExpect(jsonPath("$.owner.username").value("imageOwner"))
+                    .andExpect(jsonPath("$.owner.id").value(owner.getId()));
+        }
     }
 
 }

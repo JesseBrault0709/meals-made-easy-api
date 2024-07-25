@@ -51,7 +51,6 @@ public class DevConfiguration {
                         testUser,
                         "HAL9000.svg",
                         inputStream,
-                        "image/svg+xml",
                         27881L
                 );
                 this.imageService.setPublic(image, testUser, true);

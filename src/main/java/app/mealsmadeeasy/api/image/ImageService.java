@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface ImageService {
 
-    Image create(User owner, String userFilename, InputStream inputStream, String mimeType, long objectSize)
+    Image create(User owner, String userFilename, InputStream inputStream, long objectSize)
             throws IOException, ImageException;
 
     Image getByOwnerAndFilename(User owner, String filename, User viewer) throws ImageException;
