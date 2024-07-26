@@ -1,7 +1,6 @@
 package app.mealsmadeeasy.api.image;
 
 import app.mealsmadeeasy.api.user.User;
-import app.mealsmadeeasy.api.user.UserEntity;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
@@ -17,5 +16,5 @@ public interface Image {
     @Nullable String getCaption();
     User getOwner();
     boolean isPublic();
-    Set<UserEntity> getViewers();
+    Set<User> getViewers();
 }

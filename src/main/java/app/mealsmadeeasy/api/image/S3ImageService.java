@@ -5,6 +5,7 @@ import app.mealsmadeeasy.api.image.spec.ImageUpdateInfoSpec;
 import app.mealsmadeeasy.api.s3.S3Manager;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,9 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -75,9 +74,11 @@ public class S3ImageService implements ImageService {
         if (spec.getPublic() != null) {
             entity.setPublic(spec.getPublic());
         }
+        final Set<UserEntity> viewers = new HashSet<>(entity.getViewerEntities());
         for (final User viewerToAdd : spec.getViewersToAdd()) {
-            entity.getViewers().add((UserEntity) viewerToAdd);
+            viewers.add((UserEntity) viewerToAdd);
         }
+        entity.setViewers(viewers);
     }
 
     @Override
@@ -107,6 +108,14 @@ public class S3ImageService implements ImageService {
 
     @Override
     @PostAuthorize("@imageSecurity.isViewableBy(returnObject, #viewer)")
+    public Image getById(long id, @Nullable User viewer) throws ImageException {
+        return this.imageRepository.findById(id).orElseThrow(() -> new ImageException(
+                ImageException.Type.INVALID_ID, "No Image with id: " + id
+        ));
+    }
+
+    @Override
+    @PostAuthorize("@imageSecurity.isViewableBy(returnObject, #viewer)")
     public Image getByOwnerAndFilename(User owner, String filename, User viewer) throws ImageException {
         return this.imageRepository.findByOwnerAndUserFilename((UserEntity) owner, filename)
                 .orElseThrow(() -> new ImageException(
@@ -131,11 +140,15 @@ public class S3ImageService implements ImageService {
     public Image update(final Image image, User modifier, ImageUpdateInfoSpec updateSpec) {
         S3ImageEntity entity = (S3ImageEntity) image;
         this.transferFromSpec(entity, updateSpec);
-        for (final User toRemove : updateSpec.getViewersToRemove()) {
-            entity.getViewers().remove((UserEntity) toRemove);
-        }
-        if (updateSpec.getClearAllViewers() != null) {
-            entity.getViewers().clear();
+        final @Nullable Boolean clearAllViewers = updateSpec.getClearAllViewers();
+        if (clearAllViewers != null && clearAllViewers) {
+            entity.setViewers(Set.of());
+        } else {
+            final Set<UserEntity> viewers = new HashSet<>(entity.getViewerEntities());
+            for (final User toRemove : updateSpec.getViewersToRemove()) {
+                viewers.remove((UserEntity) toRemove);
+            }
+            entity.setViewers(viewers);
         }
         return this.imageRepository.save(entity);
     }

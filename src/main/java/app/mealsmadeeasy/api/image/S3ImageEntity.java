@@ -135,7 +135,11 @@ public class S3ImageEntity implements Image {
     }
 
     @Override
-    public Set<UserEntity> getViewers() {
+    public Set<User> getViewers() {
+        return Set.copyOf(this.viewers);
+    }
+
+    public Set<UserEntity> getViewerEntities() {
         return this.viewers;
     }
 

@@ -22,13 +22,14 @@ import java.util.List;
 import java.util.Set;
 
 import static app.mealsmadeeasy.api.image.ContainsImagesMatcher.containsImages;
+import static app.mealsmadeeasy.api.user.ContainsUsersMatcher.containsUsers;
 import static app.mealsmadeeasy.api.user.IsUserMatcher.isUser;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.Assert.assertThrows;
 
 @Testcontainers
 @SpringBootTest
@@ -165,43 +166,89 @@ public class S3ImageServiceTests {
     @Test
     @DirtiesContext
     public void updateAlt() throws Exception {
-        fail("TODO");
+        final User owner = this.createTestUser("imageOwner");
+        Image image = this.createHal9000(owner);
+        final ImageUpdateInfoSpec spec = new ImageUpdateInfoSpec();
+        spec.setAlt("HAL 9000");
+        image = this.imageService.update(image, owner, spec);
+        assertThat(image.getAlt(), is("HAL 9000"));
     }
 
     @Test
     @DirtiesContext
     public void updateCaption() throws Exception {
-        fail("TODO");
+        final User owner = this.createTestUser("imageOwner");
+        Image image = this.createHal9000(owner);
+        final ImageUpdateInfoSpec spec = new ImageUpdateInfoSpec();
+        spec.setCaption("HAL 9000 from 2001: A Space Odyssey");
+        image = this.imageService.update(image, owner, spec);
+        assertThat(image.getCaption(), is("HAL 9000 from 2001: A Space Odyssey"));
     }
 
     @Test
     @DirtiesContext
     public void updateIsPublic() throws Exception {
-        fail("TODO");
+        final User owner = this.createTestUser("imageOwner");
+        Image image = this.createHal9000(owner);
+        final ImageUpdateInfoSpec spec = new ImageUpdateInfoSpec();
+        spec.setPublic(true);
+        image = this.imageService.update(image, owner, spec);
+        assertThat(image.isPublic(), is(true));
+    }
+
+    private Image addViewer(Image image, User owner, User viewer) {
+        final ImageUpdateInfoSpec spec0 = new ImageUpdateInfoSpec();
+        spec0.setViewersToAdd(Set.of(viewer));
+        return this.imageService.update(image, owner, spec0);
     }
 
     @Test
     @DirtiesContext
     public void addViewers() throws Exception {
-        fail("TODO");
+        final User owner = this.createTestUser("imageOwner");
+        final User viewer = this.createTestUser("imageViewer");
+        Image image = this.createHal9000(owner);
+        image = this.addViewer(image, owner, viewer);
+        assertThat(image.getViewers(), containsUsers(viewer));
     }
 
     @Test
     @DirtiesContext
     public void removeViewers() throws Exception {
-        fail("TODO");
+        final User owner = this.createTestUser("imageOwner");
+        final User viewer = this.createTestUser("imageViewer");
+        Image image = this.createHal9000(owner);
+        image = this.addViewer(image, owner, viewer);
+        assertThat(image.getViewers(), containsUsers(viewer));
+
+        final ImageUpdateInfoSpec spec1 = new ImageUpdateInfoSpec();
+        spec1.setViewersToRemove(Set.of(viewer));
+        image = this.imageService.update(image, owner, spec1);
+        assertThat(image.getViewers(), empty());
     }
 
     @Test
     @DirtiesContext
     public void clearAllViewers() throws Exception {
-        fail("TODO");
+        final User owner = this.createTestUser("imageOwner");
+        final User viewer = this.createTestUser("imageViewer");
+        Image image = this.createHal9000(owner);
+        image = this.addViewer(image, owner, viewer);
+        assertThat(image.getViewers(), containsUsers(viewer));
+
+        final ImageUpdateInfoSpec spec1 = new ImageUpdateInfoSpec();
+        spec1.setClearAllViewers(true);
+        image = this.imageService.update(image, owner, spec1);
+        assertThat(image.getViewers(), empty());
     }
 
     @Test
     @DirtiesContext
     public void deleteImage() throws Exception {
-        fail("TODO");
+        final User owner = this.createTestUser("imageOwner");
+        final Image image = this.createHal9000(owner);
+        this.imageService.deleteImage(image, owner);
+        assertThrows(ImageException.class, () -> this.imageService.getById(image.getId(), owner));
     }
 
 }

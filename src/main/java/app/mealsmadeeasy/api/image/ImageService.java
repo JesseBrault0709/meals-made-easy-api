@@ -14,7 +14,9 @@ public interface ImageService {
     Image create(User owner, String userFilename, InputStream inputStream, long objectSize, ImageCreateInfoSpec infoSpec)
             throws IOException, ImageException;
 
+    Image getById(long id, @Nullable User viewer) throws ImageException;
     Image getByOwnerAndFilename(User owner, String filename, User viewer) throws ImageException;
+
     InputStream getImageContent(Image image, @Nullable User viewer) throws IOException;
     List<Image> getImagesOwnedBy(User user);
 
