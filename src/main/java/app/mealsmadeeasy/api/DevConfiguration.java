@@ -3,6 +3,7 @@ package app.mealsmadeeasy.api;
 import app.mealsmadeeasy.api.image.Image;
 import app.mealsmadeeasy.api.image.ImageException;
 import app.mealsmadeeasy.api.image.ImageService;
+import app.mealsmadeeasy.api.image.spec.ImageCreateInfoSpec;
 import app.mealsmadeeasy.api.recipe.Recipe;
 import app.mealsmadeeasy.api.recipe.RecipeService;
 import app.mealsmadeeasy.api.user.User;
@@ -47,13 +48,15 @@ public class DevConfiguration {
             logger.info("Created {}", recipe);
 
             try (final InputStream inputStream = DevConfiguration.class.getResourceAsStream("HAL9000.svg")) {
+                final ImageCreateInfoSpec spec = new ImageCreateInfoSpec();
+                spec.setPublic(true);
                 final Image image = this.imageService.create(
                         testUser,
                         "HAL9000.svg",
                         inputStream,
-                        27881L
+                        27881L,
+                        spec
                 );
-                this.imageService.setPublic(image, testUser, true);
                 logger.info("Created {}", image);
             } catch (IOException | ImageException e) {
                 logger.error("Failed to load and/or create HAL9000.svg", e);

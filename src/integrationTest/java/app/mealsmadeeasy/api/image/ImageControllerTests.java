@@ -2,6 +2,8 @@ package app.mealsmadeeasy.api.image;
 
 import app.mealsmadeeasy.api.auth.AuthService;
 import app.mealsmadeeasy.api.auth.LoginException;
+import app.mealsmadeeasy.api.image.spec.ImageCreateInfoSpec;
+import app.mealsmadeeasy.api.image.spec.ImageUpdateInfoSpec;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserCreateException;
 import app.mealsmadeeasy.api.user.UserService;
@@ -21,8 +23,10 @@ import org.testcontainers.utility.DockerImageName;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.nullValue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -76,7 +80,8 @@ public class ImageControllerTests {
                     owner,
                     USER_FILENAME,
                     hal9000,
-                    27881L
+                    27881L,
+                    new ImageCreateInfoSpec()
             );
         }
     }
@@ -89,12 +94,24 @@ public class ImageControllerTests {
         }
     }
 
+    private Image makePublic(Image image, User modifier) {
+        final ImageUpdateInfoSpec spec = new ImageUpdateInfoSpec();
+        spec.setPublic(true);
+        return this.imageService.update(image, modifier, spec);
+    }
+
+    private Image addViewer(Image image, User modifier, User viewerToAdd) {
+        final ImageUpdateInfoSpec spec = new ImageUpdateInfoSpec();
+        spec.setViewersToAdd(Set.of(viewerToAdd));
+        return this.imageService.update(image, modifier, spec);
+    }
+
     @Test
     @DirtiesContext
     public void getImageNoPrincipal() throws Exception {
         final User owner = this.createTestUser("imageOwner");
         final Image image = this.createHal9000(owner);
-        this.imageService.setPublic(image, owner, true);
+        this.makePublic(image, owner);
         try (final InputStream hal9000 = getHal9000()) {
             final byte[] halBytes = hal9000.readAllBytes();
             this.mockMvc.perform(get("/images/imageOwner/HAL9000.svg"))
@@ -130,7 +147,7 @@ public class ImageControllerTests {
         final User owner = this.createTestUser("imageOwner");
         final User viewer = this.createTestUser("viewer");
         final Image image = this.createHal9000(owner);
-        this.imageService.addViewer(image, owner, viewer);
+        this.addViewer(image, owner, viewer);
         final String accessToken = this.getAccessToken(viewer.getUsername());
         this.doGetImageTestWithViewer(accessToken);
     }
@@ -168,6 +185,60 @@ public class ImageControllerTests {
                     .andExpect(jsonPath("$.owner.username").value("imageOwner"))
                     .andExpect(jsonPath("$.owner.id").value(owner.getId()));
         }
+    }
+
+    @Test
+    @DirtiesContext
+    public void updateAlt() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void updateCaption() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void updateIsPublic() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void addViewers() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void removeViewers() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void clearAllViewers() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void updateInfoWithViewerFails() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void deleteImageWithOwner() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void deleteImageWithViewer() throws Exception {
+        fail("TODO");
     }
 
 }

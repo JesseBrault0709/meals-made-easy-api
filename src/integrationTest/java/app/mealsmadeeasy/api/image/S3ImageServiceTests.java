@@ -1,5 +1,7 @@
 package app.mealsmadeeasy.api.image;
 
+import app.mealsmadeeasy.api.image.spec.ImageCreateInfoSpec;
+import app.mealsmadeeasy.api.image.spec.ImageUpdateInfoSpec;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserCreateException;
 import app.mealsmadeeasy.api.user.UserService;
@@ -17,6 +19,7 @@ import org.testcontainers.utility.DockerImageName;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 
 import static app.mealsmadeeasy.api.image.ContainsImagesMatcher.containsImages;
 import static app.mealsmadeeasy.api.user.IsUserMatcher.isUser;
@@ -25,6 +28,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @Testcontainers
 @SpringBootTest
@@ -68,9 +72,16 @@ public class S3ImageServiceTests {
                     owner,
                     USER_FILENAME,
                     hal9000,
-                    27881L
+                    27881L,
+                    new ImageCreateInfoSpec()
             );
         }
+    }
+
+    private Image makePublic(Image image, User modifier) {
+        final ImageUpdateInfoSpec spec = new ImageUpdateInfoSpec();
+        spec.setPublic(true);
+        return this.imageService.update(image, modifier, spec);
     }
 
     @Test
@@ -109,7 +120,7 @@ public class S3ImageServiceTests {
     public void loadPublicImage() throws ImageException, IOException {
         final User owner = this.createTestUser("imageOwner");
         Image image = this.createHal9000(owner);
-        image = this.imageService.setPublic(image, owner, true);
+        image = this.makePublic(image, owner);
         try (final InputStream stored =
                      this.imageService.getImageContent(image, null)) {
             final byte[] storedBytes = stored.readAllBytes();
@@ -123,7 +134,9 @@ public class S3ImageServiceTests {
         final User owner = this.createTestUser("imageOwner");
         final User viewer = this.createTestUser("imageViewer");
         Image image = this.createHal9000(owner);
-        image = this.imageService.addViewer(image, owner, viewer);
+        final ImageUpdateInfoSpec spec = new ImageUpdateInfoSpec();
+        spec.setViewersToAdd(Set.of(viewer));
+        image = this.imageService.update(image, owner, spec);
         try (final InputStream stored =
                      this.imageService.getImageContent(image, viewer)) {
             final byte[] storedBytes = stored.readAllBytes();
@@ -151,40 +164,44 @@ public class S3ImageServiceTests {
 
     @Test
     @DirtiesContext
-    public void updateOwner() throws ImageException, IOException {
-        final User oldOwner = this.createTestUser("oldImageOwner");
-        final User newOwner = this.createTestUser("newImageOwner");
-        Image image = this.createHal9000(oldOwner);
-        assertThat(image.getOwner(), isUser(oldOwner));
-        image = this.imageService.updateOwner(image, oldOwner, newOwner);
-        assertThat(image.getOwner(), isUser(newOwner));
+    public void updateAlt() throws Exception {
+        fail("TODO");
     }
 
     @Test
     @DirtiesContext
-    public void setAlt() throws ImageException, IOException {
-        final User owner = this.createTestUser("imageOwner");
-        Image image = this.createHal9000(owner);
-        image = this.imageService.setAlt(image, owner, "Example alt.");
-        assertThat(image.getAlt(), is("Example alt."));
+    public void updateCaption() throws Exception {
+        fail("TODO");
     }
 
     @Test
     @DirtiesContext
-    public void setCaption() throws ImageException, IOException {
-        final User owner = this.createTestUser("imageOwner");
-        Image image = this.createHal9000(owner);
-        image = this.imageService.setCaption(image, owner, "Example caption.");
-        assertThat(image.getCaption(), is("Example caption."));
+    public void updateIsPublic() throws Exception {
+        fail("TODO");
     }
 
     @Test
     @DirtiesContext
-    public void setPublicToTrue() throws ImageException, IOException {
-        final User owner = this.createTestUser("imageOwner");
-        Image image = this.createHal9000(owner);
-        image = this.imageService.setPublic(image, owner, true);
-        assertThat(image.isPublic(), is(true));
+    public void addViewers() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void removeViewers() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void clearAllViewers() throws Exception {
+        fail("TODO");
+    }
+
+    @Test
+    @DirtiesContext
+    public void deleteImage() throws Exception {
+        fail("TODO");
     }
 
 }
