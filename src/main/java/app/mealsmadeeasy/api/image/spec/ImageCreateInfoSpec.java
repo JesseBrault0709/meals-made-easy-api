@@ -11,7 +11,7 @@ public class ImageCreateInfoSpec {
     private @Nullable String alt;
     private @Nullable String caption;
     private @Nullable Boolean isPublic;
-    private Set<User> viewersToAdd = new HashSet<>();
+    private @Nullable Set<User> viewersToAdd = new HashSet<>();
 
     public @Nullable String getAlt() {
         return this.alt;
@@ -37,11 +37,11 @@ public class ImageCreateInfoSpec {
         isPublic = aPublic;
     }
 
-    public Set<User> getViewersToAdd() {
+    public @Nullable Set<User> getViewersToAdd() {
         return this.viewersToAdd;
     }
 
-    public void setViewersToAdd(Set<User> viewersToAdd) {
+    public void setViewersToAdd(@Nullable Set<User> viewersToAdd) {
         this.viewersToAdd = viewersToAdd;
     }
 

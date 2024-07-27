@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -64,21 +65,30 @@ public class S3ImageService implements ImageService {
         };
     }
 
-    private void transferFromSpec(S3ImageEntity entity, ImageCreateInfoSpec spec) {
+    private boolean transferFromSpec(S3ImageEntity entity, ImageCreateInfoSpec spec) {
+        boolean didTransfer = false;
         if (spec.getAlt() != null) {
             entity.setAlt(spec.getAlt());
+            didTransfer = true;
         }
         if (spec.getCaption() != null) {
             entity.setCaption(spec.getCaption());
+            didTransfer = true;
         }
         if (spec.getPublic() != null) {
             entity.setPublic(spec.getPublic());
+            didTransfer = true;
         }
-        final Set<UserEntity> viewers = new HashSet<>(entity.getViewerEntities());
-        for (final User viewerToAdd : spec.getViewersToAdd()) {
-            viewers.add((UserEntity) viewerToAdd);
+        final @Nullable Set<User> viewersToAdd = spec.getViewersToAdd();
+        if (viewersToAdd != null) {
+            final Set<UserEntity> viewers = new HashSet<>(entity.getViewerEntities());
+            for (final User viewerToAdd : spec.getViewersToAdd()) {
+                viewers.add((UserEntity) viewerToAdd);
+            }
+            entity.setViewers(viewers);
+            didTransfer = true;
         }
-        entity.setViewers(viewers);
+        return didTransfer;
     }
 
     @Override
@@ -139,16 +149,24 @@ public class S3ImageService implements ImageService {
     @PreAuthorize("@imageSecurity.isOwner(#image, #modifier)")
     public Image update(final Image image, User modifier, ImageUpdateInfoSpec updateSpec) {
         S3ImageEntity entity = (S3ImageEntity) image;
-        this.transferFromSpec(entity, updateSpec);
+        boolean didUpdate = this.transferFromSpec(entity, updateSpec);
         final @Nullable Boolean clearAllViewers = updateSpec.getClearAllViewers();
         if (clearAllViewers != null && clearAllViewers) {
-            entity.setViewers(Set.of());
+            entity.setViewers(new HashSet<>());
+            didUpdate = true;
         } else {
-            final Set<UserEntity> viewers = new HashSet<>(entity.getViewerEntities());
-            for (final User toRemove : updateSpec.getViewersToRemove()) {
-                viewers.remove((UserEntity) toRemove);
+            final @Nullable Set<User> viewersToRemove = updateSpec.getViewersToRemove();
+            if (viewersToRemove != null) {
+                final Set<UserEntity> currentViewers = new HashSet<>(entity.getViewerEntities());
+                for (final User toRemove : updateSpec.getViewersToRemove()) {
+                    currentViewers.remove((UserEntity) toRemove);
+                }
+                entity.setViewers(currentViewers);
+                didUpdate = true;
             }
-            entity.setViewers(viewers);
+        }
+        if (didUpdate) {
+            entity.setModified(LocalDateTime.now());
         }
         return this.imageRepository.save(entity);
     }

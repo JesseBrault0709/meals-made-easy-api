@@ -4,6 +4,7 @@ import app.mealsmadeeasy.api.user.view.UserInfoView;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 public class ImageView {
 
@@ -15,6 +16,7 @@ public class ImageView {
     private @Nullable String caption;
     private UserInfoView owner;
     private boolean isPublic;
+    private Set<UserInfoView> viewers;
 
     public LocalDateTime getCreated() {
         return this.created;
@@ -78,6 +80,14 @@ public class ImageView {
 
     public void setIsPublic(boolean isPublic) {
         this.isPublic = isPublic;
+    }
+
+    public Set<UserInfoView> getViewers() {
+        return this.viewers;
+    }
+
+    public void setViewers(Set<UserInfoView> viewers) {
+        this.viewers = viewers;
     }
 
 }

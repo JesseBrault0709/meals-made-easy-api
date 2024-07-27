@@ -8,14 +8,14 @@ import java.util.Set;
 
 public class ImageUpdateInfoSpec extends ImageCreateInfoSpec {
 
-    private Set<User> viewersToRemove = new HashSet<>();
+    private @Nullable Set<User> viewersToRemove;
     private @Nullable Boolean clearAllViewers;
 
-    public Set<User> getViewersToRemove() {
+    public @Nullable Set<User> getViewersToRemove() {
         return this.viewersToRemove;
     }
 
-    public void setViewersToRemove(Set<User> viewersToRemove) {
+    public void setViewersToRemove(@Nullable Set<User> viewersToRemove) {
         this.viewersToRemove = viewersToRemove;
     }
 

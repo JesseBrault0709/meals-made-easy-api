@@ -7,16 +7,21 @@ import app.mealsmadeeasy.api.image.view.ImageView;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserService;
 import app.mealsmadeeasy.api.user.view.UserInfoView;
+import app.mealsmadeeasy.api.util.AccessDeniedView;
 import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -38,6 +43,15 @@ public class ImageController {
         userInfoView.setId(owner.getId());
         userInfoView.setUsername(owner.getUsername());
         imageView.setOwner(userInfoView);
+
+        final Set<UserInfoView> viewers = new HashSet<>();
+        for (final User viewer : image.getViewers()) {
+            final UserInfoView viewerView = new UserInfoView();
+            viewerView.setId(viewer.getId());
+            viewerView.setUsername(viewer.getUsername());
+            viewers.add(viewerView);
+        }
+        imageView.setViewers(viewers);
 
         return imageView;
     }
@@ -71,6 +85,19 @@ public class ImageController {
         }
         spec.setClearAllViewers(body.getClearAllViewers());
         return spec;
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<AccessDeniedView> onAccessDenied(AccessDeniedException e) {
+        if (e instanceof AuthorizationDeniedException) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new AccessDeniedView(HttpStatus.FORBIDDEN.value(), e.getMessage()));
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(new AccessDeniedView(HttpStatus.UNAUTHORIZED.value(), e.getMessage()));
+        }
     }
 
     @GetMapping("/{username}/{filename}")

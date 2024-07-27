@@ -2,15 +2,18 @@ package app.mealsmadeeasy.api.image;
 
 import app.mealsmadeeasy.api.auth.AuthService;
 import app.mealsmadeeasy.api.auth.LoginException;
+import app.mealsmadeeasy.api.image.body.ImageUpdateInfoBody;
 import app.mealsmadeeasy.api.image.spec.ImageCreateInfoSpec;
 import app.mealsmadeeasy.api.image.spec.ImageUpdateInfoSpec;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserCreateException;
 import app.mealsmadeeasy.api.user.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -24,11 +27,12 @@ import org.testcontainers.utility.DockerImageName;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.jupiter.api.Assertions.fail;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.empty;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Testcontainers
@@ -65,6 +69,9 @@ public class ImageControllerTests {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private User createTestUser(String username) {
         try {
@@ -183,62 +190,178 @@ public class ImageControllerTests {
                     .andExpect(jsonPath("$.caption").value("HAL 9000, from 2001: A Space Odyssey"))
                     .andExpect(jsonPath("$.isPublic").value(true))
                     .andExpect(jsonPath("$.owner.username").value("imageOwner"))
-                    .andExpect(jsonPath("$.owner.id").value(owner.getId()));
+                    .andExpect(jsonPath("$.owner.id").value(owner.getId()))
+                    .andExpect(jsonPath("$.viewers").value(empty()));
         }
+    }
+
+    private String prepUpdate() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        this.createHal9000(owner);
+        return this.getAccessToken(owner.getUsername());
     }
 
     @Test
     @DirtiesContext
     public void updateAlt() throws Exception {
-        fail("TODO");
+        final String accessToken = this.prepUpdate();
+        final ImageUpdateInfoBody body = new ImageUpdateInfoBody();
+        body.setAlt("HAL 9000");
+        this.mockMvc.perform(
+                post("/images/imageOwner/HAL9000.svg")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(this.objectMapper.writeValueAsString(body))
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.modified").value(notNullValue()))
+                .andExpect(jsonPath("$.alt").value("HAL 9000"));
     }
 
     @Test
     @DirtiesContext
     public void updateCaption() throws Exception {
-        fail("TODO");
+        final String accessToken = this.prepUpdate();
+        final ImageUpdateInfoBody body = new ImageUpdateInfoBody();
+        body.setCaption("HAL 9000 from 2001: A Space Odyssey");
+        this.mockMvc.perform(
+                post("/images/imageOwner/HAL9000.svg")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(this.objectMapper.writeValueAsString(body))
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.modified").value(notNullValue()))
+                .andExpect(jsonPath("$.caption").value("HAL 9000 from 2001: A Space Odyssey"));
     }
 
     @Test
     @DirtiesContext
     public void updateIsPublic() throws Exception {
-        fail("TODO");
+        final String accessToken = this.prepUpdate();
+        final ImageUpdateInfoBody body = new ImageUpdateInfoBody();
+        body.setPublic(true);
+        this.mockMvc.perform(
+                post("/images/imageOwner/HAL9000.svg")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(this.objectMapper.writeValueAsString(body))
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.modified").value(notNullValue()))
+                .andExpect(jsonPath("$.isPublic").value(true));
     }
 
     @Test
     @DirtiesContext
     public void addViewers() throws Exception {
-        fail("TODO");
+        final String accessToken = this.prepUpdate();
+        final ImageUpdateInfoBody body = new ImageUpdateInfoBody();
+        final Set<String> viewerUsernames = Set.of(this.createTestUser("imageViewer")).stream()
+                .map(User::getUsername)
+                .collect(Collectors.toSet());
+        body.setViewersToAdd(viewerUsernames);
+        this.mockMvc.perform(
+                post("/images/imageOwner/HAL9000.svg")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(this.objectMapper.writeValueAsString(body))
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.modified").value(notNullValue()))
+                .andExpect(jsonPath("$.viewers").value(not(empty())))
+                .andExpect(jsonPath("$.viewers[0].username").value("imageViewer"));
+    }
+
+    private record OwnerViewerImage(User owner, User viewer, Image image) {}
+
+    private OwnerViewerImage prepOwnerViewerImage() throws ImageException, IOException {
+        final User owner = this.createTestUser("imageOwner");
+        final User viewer = this.createTestUser("imageViewer");
+        final Image image = this.createHal9000(owner);
+        final ImageUpdateInfoSpec spec = new ImageUpdateInfoSpec();
+        spec.setViewersToAdd(Set.of(viewer));
+        this.imageService.update(image, owner, spec);
+        return new OwnerViewerImage(owner, viewer, image);
     }
 
     @Test
     @DirtiesContext
     public void removeViewers() throws Exception {
-        fail("TODO");
+        final OwnerViewerImage ownerViewerImage = this.prepOwnerViewerImage();
+        final String accessToken = this.getAccessToken(ownerViewerImage.owner().getUsername());
+        final ImageUpdateInfoBody body = new ImageUpdateInfoBody();
+        body.setViewersToRemove(Set.of(ownerViewerImage.viewer().getUsername()));
+        this.mockMvc.perform(
+                post("/images/imageOwner/HAL9000.svg")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(this.objectMapper.writeValueAsString(body))
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.modified").value(notNullValue()))
+                .andExpect(jsonPath("$.viewers").value(empty()));
     }
 
     @Test
     @DirtiesContext
     public void clearAllViewers() throws Exception {
-        fail("TODO");
+        final OwnerViewerImage ownerViewerImage = this.prepOwnerViewerImage();
+        final String accessToken = this.getAccessToken(ownerViewerImage.owner().getUsername());
+        final ImageUpdateInfoBody body = new ImageUpdateInfoBody();
+        body.setClearAllViewers(true);
+        this.mockMvc.perform(
+                post("/images/imageOwner/HAL9000.svg")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(this.objectMapper.writeValueAsString(body))
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.modified").value(notNullValue()))
+                .andExpect(jsonPath("$.viewers").value(empty()));
     }
 
     @Test
     @DirtiesContext
-    public void updateInfoWithViewerFails() throws Exception {
-        fail("TODO");
+    public void updateInfoByViewerForbidden() throws Exception {
+        final OwnerViewerImage ownerViewerImage = this.prepOwnerViewerImage();
+        final String accessToken = this.getAccessToken(ownerViewerImage.viewer().getUsername()); // viewer
+        final ImageUpdateInfoBody body = new ImageUpdateInfoBody();
+        this.mockMvc.perform(
+                post("/images/imageOwner/HAL9000.svg")
+                        .contentType(MediaType.APPLICATION_JSON )
+                        .content(this.objectMapper.writeValueAsString(body))
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.statusCode").value(403))
+                .andExpect(jsonPath("$.message").value(notNullValue()));
     }
 
     @Test
     @DirtiesContext
     public void deleteImageWithOwner() throws Exception {
-        fail("TODO");
+        final User owner = this.createTestUser("imageOwner");
+        final Image image = this.createHal9000(owner);
+        final String accessToken = this.getAccessToken(owner.getUsername());
+        this.mockMvc.perform(
+                delete("/images/imageOwner/HAL9000.svg")
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isNoContent());
+        assertThrows(ImageException.class, () -> this.imageService.getById(image.getId(), owner));
     }
 
     @Test
     @DirtiesContext
-    public void deleteImageWithViewer() throws Exception {
-        fail("TODO");
+    public void deleteImageByViewerForbidden() throws Exception {
+        final OwnerViewerImage ownerViewerImage = this.prepOwnerViewerImage();
+        final String accessToken = this.getAccessToken(ownerViewerImage.viewer().getUsername());
+        this.mockMvc.perform(
+                delete("/images/imageOwner/HAL9000.svg")
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isForbidden());
     }
 
 }
