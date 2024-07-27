@@ -10,7 +10,6 @@ import app.mealsmadeeasy.api.user.view.UserInfoView;
 import app.mealsmadeeasy.api.util.AccessDeniedView;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;

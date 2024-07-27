@@ -3,7 +3,6 @@ package app.mealsmadeeasy.api.image.spec;
 import app.mealsmadeeasy.api.user.User;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Set;
 
 public class ImageUpdateInfoSpec extends ImageCreateInfoSpec {
