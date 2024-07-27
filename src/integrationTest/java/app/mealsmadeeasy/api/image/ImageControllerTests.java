@@ -161,6 +161,56 @@ public class ImageControllerTests {
 
     @Test
     @DirtiesContext
+    public void getNonPublicImageNoPrincipalForbidden() throws Exception {
+        final User owner = this.createTestUser("imageOwner");
+        this.createHal9000(owner);
+        this.mockMvc.perform(
+                get("/images/imageOwner/HAL9000.svg")
+        ).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DirtiesContext
+    public void getNonPublicImageWithPrincipalForbidden() throws Exception {
+        final User owner = this.createTestUser("imageOwner");
+        final User viewer = this.createTestUser("viewer");
+        this.createHal9000(owner);
+        final String accessToken = this.getAccessToken(viewer.getUsername());
+        this.mockMvc.perform(
+                get("/images/imageOwner/HAL9000.svg")
+                        .header("Authorization", "Bearer " + accessToken)
+        ).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DirtiesContext
+    public void getImageWithViewersNoPrincipalForbidden() throws Exception {
+        final User owner = this.createTestUser("imageOwner");
+        final User viewer = this.createTestUser("viewer");
+        final Image image = this.createHal9000(owner);
+        this.addViewer(image, owner, viewer);
+        this.mockMvc.perform(
+                get("/images/imageOwner/HAL9000.svg")
+        ).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DirtiesContext
+    public void getImageWithViewersWrongViewerForbidden() throws Exception {
+        final User owner = this.createTestUser("imageOwner");
+        final User viewer = this.createTestUser("viewer");
+        final User wrongViewer = this.createTestUser("wrongViewer");
+        final Image image = this.createHal9000(owner);
+        this.addViewer(image, owner, viewer);
+        final String accessToken = this.getAccessToken(wrongViewer.getUsername());
+        this.mockMvc.perform(
+                get("/images/imageOwner/HAL9000.svg")
+                        .header("Authorization", "Bearer " + accessToken)
+        ).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DirtiesContext
     public void putImage() throws Exception {
         final User owner = this.createTestUser("imageOwner");
         final String accessToken = this.getAccessToken(owner.getUsername());
