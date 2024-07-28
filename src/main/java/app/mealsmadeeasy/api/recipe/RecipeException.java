@@ -3,7 +3,7 @@ package app.mealsmadeeasy.api.recipe;
 public class RecipeException extends Exception {
 
     public enum Type {
-        INVALID_OWNER_USERNAME, INVALID_STAR, NOT_VIEWABLE, INVALID_ID
+        INVALID_OWNER_USERNAME, INVALID_STAR, NOT_VIEWABLE, INVALID_COMMENT_ID, INVALID_ID
     }
 
     private final Type type;

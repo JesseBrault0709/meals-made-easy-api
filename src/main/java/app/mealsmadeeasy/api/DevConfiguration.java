@@ -6,6 +6,7 @@ import app.mealsmadeeasy.api.image.ImageService;
 import app.mealsmadeeasy.api.image.spec.ImageCreateInfoSpec;
 import app.mealsmadeeasy.api.recipe.Recipe;
 import app.mealsmadeeasy.api.recipe.RecipeService;
+import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserService;
 import org.slf4j.Logger;
@@ -43,19 +44,22 @@ public class DevConfiguration {
             );
             logger.info("Created {}", testUser);
 
-            final Recipe recipe = this.recipeService.create(testUser, "Test Recipe", "Hello, World!");
-            this.recipeService.setPublic(recipe, testUser, true);
+            final RecipeCreateSpec recipeCreateSpec = new RecipeCreateSpec();
+            recipeCreateSpec.setTitle("Test Recipe");
+            recipeCreateSpec.setRawText("Hello, World!");
+            recipeCreateSpec.setPublic(true);
+            final Recipe recipe = this.recipeService.create(testUser, recipeCreateSpec);
             logger.info("Created {}", recipe);
 
             try (final InputStream inputStream = DevConfiguration.class.getResourceAsStream("HAL9000.svg")) {
-                final ImageCreateInfoSpec spec = new ImageCreateInfoSpec();
-                spec.setPublic(true);
+                final ImageCreateInfoSpec imageCreateSpec = new ImageCreateInfoSpec();
+                imageCreateSpec.setPublic(true);
                 final Image image = this.imageService.create(
                         testUser,
                         "HAL9000.svg",
                         inputStream,
                         27881L,
-                        spec
+                        imageCreateSpec
                 );
                 logger.info("Created {}", image);
             } catch (IOException | ImageException e) {

@@ -1,5 +1,6 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.image.Image;
 import app.mealsmadeeasy.api.recipe.comment.RecipeComment;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
 import app.mealsmadeeasy.api.user.User;
@@ -19,4 +20,5 @@ public interface Recipe {
     boolean isPublic();
     Set<User> getViewers();
     Set<RecipeComment> getComments();
+    Image getMainImage();
 }

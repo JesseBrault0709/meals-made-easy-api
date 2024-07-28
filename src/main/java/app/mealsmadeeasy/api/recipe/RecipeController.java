@@ -1,8 +1,8 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
 import app.mealsmadeeasy.api.recipe.view.RecipeExceptionView;
 import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
-import app.mealsmadeeasy.api.recipe.view.RecipePageView;
 import app.mealsmadeeasy.api.user.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -32,9 +32,9 @@ public class RecipeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<RecipePageView> getById(@PathVariable long id, @AuthenticationPrincipal User user)
+    public ResponseEntity<FullRecipeView> getById(@PathVariable long id, @AuthenticationPrincipal User user)
             throws RecipeException {
-        return ResponseEntity.ok(this.recipeService.getPageViewById(id, user));
+        return ResponseEntity.ok(this.recipeService.getFullViewById(id, user));
     }
 
     @GetMapping

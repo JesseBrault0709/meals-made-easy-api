@@ -1,5 +1,6 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserCreateException;
 import app.mealsmadeeasy.api.user.UserService;
@@ -36,16 +37,19 @@ public class RecipeControllerTests {
         }
     }
 
-    private Recipe createTestRecipe(User owner) {
-        return this.recipeService.create(owner, "Test Recipe", "# Hello, World!");
+    private Recipe createTestRecipe(User owner, boolean isPublic) {
+        final RecipeCreateSpec spec = new RecipeCreateSpec();
+        spec.setTitle("Test Recipe");
+        spec.setRawText("# Hello, World!");
+        spec.setPublic(isPublic);
+        return this.recipeService.create(owner, spec);
     }
 
     @Test
     @DirtiesContext
     public void getRecipePageViewByIdPublicRecipeNoPrincipal() throws Exception {
         final User owner = this.createTestUser("owner");
-        final Recipe recipe = this.createTestRecipe(owner);
-        this.recipeService.setPublic(recipe, owner, true);
+        final Recipe recipe = this.createTestRecipe(owner, true);
         this.mockMvc.perform(get("/recipes/{id}", recipe.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
@@ -61,8 +65,7 @@ public class RecipeControllerTests {
     @DirtiesContext
     public void getRecipeInfoViewsNoPrincipal() throws Exception {
         final User owner = this.createTestUser("owner");
-        final Recipe recipe = this.createTestRecipe(owner);
-        this.recipeService.setPublic(recipe, owner, true);
+        final Recipe recipe = this.createTestRecipe(owner, true);
         this.mockMvc.perform(get("/recipes"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.slice.number").value(0))

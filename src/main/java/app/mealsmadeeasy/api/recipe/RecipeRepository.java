@@ -13,18 +13,17 @@ import java.util.Optional;
 public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
 
     List<RecipeEntity> findAllByIsPublicIsTrue();
-    List<RecipeEntity> findAllByViewersContaining(UserEntity viewer);
-    List<RecipeEntity> findAllByOwner(UserEntity owner);
 
-    @Query("SELECT r FROM Recipe r WHERE size(r.stars) >= ?1 AND r.isPublic")
-    List<RecipeEntity> findAllPublicByStarsGreaterThanEqual(long stars);
+    List<RecipeEntity> findAllByViewersContaining(UserEntity viewer);
+
+    List<RecipeEntity> findAllByOwner(UserEntity owner);
 
     @Query("SELECT r FROM Recipe r WHERE size(r.stars) >= ?1 AND (r.isPublic OR ?2 MEMBER OF r.viewers)")
     List<RecipeEntity> findAllViewableByStarsGreaterThanEqual(long stars, UserEntity viewer);
 
     @Query("SELECT r FROM Recipe r WHERE r.id = ?1")
     @EntityGraph(attributePaths = { "viewers" })
-    RecipeEntity getByIdWithViewers(long id);
+    Optional<RecipeEntity> findByIdWithViewers(long id);
 
     @Query("SELECT r FROM Recipe r WHERE r.id = ?1")
     @EntityGraph(attributePaths = { "stars" })

@@ -4,7 +4,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
 
-public class RecipePageView {
+public class FullRecipeView {
 
     private long id;
     private LocalDateTime created;

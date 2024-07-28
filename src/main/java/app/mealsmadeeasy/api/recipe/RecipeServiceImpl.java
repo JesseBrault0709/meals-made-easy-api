@@ -1,16 +1,12 @@
 package app.mealsmadeeasy.api.recipe;
 
-import app.mealsmadeeasy.api.recipe.comment.RecipeComment;
-import app.mealsmadeeasy.api.recipe.comment.RecipeCommentEntity;
-import app.mealsmadeeasy.api.recipe.comment.RecipeCommentRepository;
-import app.mealsmadeeasy.api.recipe.star.RecipeStar;
-import app.mealsmadeeasy.api.recipe.star.RecipeStarEntity;
-import app.mealsmadeeasy.api.recipe.star.RecipeStarRepository;
+import app.mealsmadeeasy.api.image.S3ImageEntity;
+import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
+import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
+import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
 import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
-import app.mealsmadeeasy.api.recipe.view.RecipePageView;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
-import app.mealsmadeeasy.api.user.UserRepository;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +14,12 @@ import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -38,95 +36,79 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     private final RecipeRepository recipeRepository;
-    private final UserRepository userRepository;
-    private final RecipeStarRepository recipeStarRepository;
-    private final RecipeCommentRepository recipeCommentRepository;
 
-    public RecipeServiceImpl(
-            RecipeRepository recipeRepository,
-            UserRepository userRepository,
-            RecipeStarRepository recipeStarRepository,
-            RecipeCommentRepository recipeCommentRepository
-    ) {
+    public RecipeServiceImpl(RecipeRepository recipeRepository) {
         this.recipeRepository = recipeRepository;
-        this.userRepository = userRepository;
-        this.recipeStarRepository = recipeStarRepository;
-        this.recipeCommentRepository = recipeCommentRepository;
     }
 
     @Override
-    public Recipe create(String ownerUsername, String title, String rawText) throws RecipeException {
+    public Recipe create(@Nullable User owner, RecipeCreateSpec spec) {
+        if (owner == null) {
+            throw new AccessDeniedException("Must be logged in.");
+        }
         final RecipeEntity draft = new RecipeEntity();
-        final UserEntity userEntity = this.userRepository.findByUsername(ownerUsername)
-                .orElseThrow(() -> new RecipeException(
-                        RecipeException.Type.INVALID_OWNER_USERNAME,
-                        "No such ownerUsername " + ownerUsername
-                ));
-        draft.setOwner(userEntity);
-        draft.setTitle(title);
-        draft.setRawText(rawText);
+        draft.setCreated(LocalDateTime.now());
+        draft.setOwner((UserEntity) owner);
+        draft.setTitle(spec.getTitle());
+        draft.setRawText(spec.getRawText());
+        draft.setMainImage((S3ImageEntity) spec.getMainImage());
+        draft.setPublic(spec.isPublic());
         return this.recipeRepository.save(draft);
     }
 
-    @Override
-    public Recipe create(User user, String title, String rawText) {
-        final RecipeEntity draft = new RecipeEntity();
-        draft.setOwner((UserEntity) user);
-        draft.setTitle(title);
-        draft.setRawText(rawText);
-        return this.recipeRepository.save(draft);
-    }
-
-    @Override
-    @PostAuthorize("returnObject.isPublic")
-    public Recipe getById(long id) throws RecipeException {
+    private RecipeEntity findRecipeEntity(long id) throws RecipeException {
         return this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
-                RecipeException.Type.INVALID_ID,
-                "No such recipe for id " + id
+                RecipeException.Type.INVALID_ID, "No such Recipe with id: " + id
         ));
     }
 
     @Override
     @PostAuthorize("@recipeSecurity.isViewableBy(returnObject, #viewer)")
     public Recipe getById(long id, User viewer) throws RecipeException {
-        return this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
-                RecipeException.Type.INVALID_ID,
-                "No such recipe for id " + id
-        ));
-    }
-
-    @Override
-    @PostAuthorize("returnObject.isPublic")
-    public Recipe getByIdWithStars(long id) throws RecipeException {
-        return this.recipeRepository.findByIdWithStars(id).orElseThrow(() -> new RecipeException(
-                RecipeException.Type.INVALID_ID,
-                "No such recipe for id " + id
-        ));
+        return this.findRecipeEntity(id);
     }
 
     @Override
     @PostAuthorize("@recipeSecurity.isViewableBy(returnObject, #viewer)")
-    public Recipe getByIdWithStars(long id, User viewer) throws RecipeException {
+    public Recipe getByIdWithStars(long id, @Nullable User viewer) throws RecipeException {
         return this.recipeRepository.findByIdWithStars(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
-                "No such recipe for id " + id
+                "No such Recipe with id: " + id
         ));
+    }
+
+    private String getRenderedMarkdown(RecipeEntity entity) {
+        if (entity.getCachedRenderedText() == null) {
+            entity.setCachedRenderedText(renderAndCleanMarkdown(entity.getRawText()));
+            entity = this.recipeRepository.save(entity);
+        }
+        return entity.getCachedRenderedText();
+    }
+
+    private int getStarCount(Recipe recipe) {
+        return this.recipeRepository.getStarCount(recipe.getId());
+    }
+
+    private int getViewerCount(long recipeId) {
+        return this.recipeRepository.getViewerCount(recipeId);
     }
 
     @Override
     @PostAuthorize("@recipeSecurity.isViewableBy(#id, #viewer)")
-    public RecipePageView getPageViewById(long id, @Nullable User viewer) throws RecipeException {
-        final Recipe recipe = this.recipeRepository.getReferenceById(id);
-        final RecipePageView view = new RecipePageView();
+    public FullRecipeView getFullViewById(long id, @Nullable User viewer) throws RecipeException {
+        final RecipeEntity recipe = this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
+                RecipeException.Type.INVALID_ID, "No such Recipe for id: " + id
+        ));
+        final FullRecipeView view = new FullRecipeView();
         view.setId(recipe.getId());
         view.setCreated(recipe.getCreated());
         view.setModified(recipe.getModified());
         view.setTitle(recipe.getTitle());
-        view.setText(this.getRenderedMarkdown(recipe, viewer));
+        view.setText(this.getRenderedMarkdown(recipe));
         view.setOwnerId(recipe.getOwner().getId());
         view.setOwnerUsername(recipe.getOwner().getUsername());
-        view.setStarCount(this.getStarCount(recipe, viewer));
-        view.setViewerCount(this.getViewerCount(recipe, viewer));
+        view.setStarCount(this.getStarCount(recipe));
+        view.setViewerCount(this.getViewerCount(recipe.getId()));
         return view;
     }
 
@@ -144,14 +126,9 @@ public class RecipeServiceImpl implements RecipeService {
             view.setOwnerId(entity.getOwner().getId());
             view.setOwnerUsername(entity.getOwner().getUsername());
             view.setPublic(entity.isPublic());
-            view.setStarCount(this.getStarCount(entity, viewer));
+            view.setStarCount(this.getStarCount(entity));
             return view;
         });
-    }
-
-    @Override
-    public List<Recipe> getByMinimumStars(long minimumStars) {
-        return List.copyOf(this.recipeRepository.findAllPublicByStarsGreaterThanEqual(minimumStars));
     }
 
     @Override
@@ -167,169 +144,75 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    public List<Recipe> getRecipesViewableBy(User user) {
-        return List.copyOf(this.recipeRepository.findAllByViewersContaining((UserEntity) user));
+    public List<Recipe> getRecipesViewableBy(User viewer) {
+        return List.copyOf(this.recipeRepository.findAllByViewersContaining((UserEntity) viewer));
     }
 
     @Override
-    public List<Recipe> getRecipesOwnedBy(User user) {
-        return List.copyOf(this.recipeRepository.findAllByOwner((UserEntity) user));
+    public List<Recipe> getRecipesOwnedBy(User owner) {
+        return List.copyOf(this.recipeRepository.findAllByOwner((UserEntity) owner));
     }
 
     @Override
-    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #viewer)")
-    public String getRenderedMarkdown(Recipe recipe, User viewer) {
-        RecipeEntity entity = (RecipeEntity) recipe;
-        if (entity.getCachedRenderedText() == null) {
-            entity.setCachedRenderedText(renderAndCleanMarkdown(entity.getRawText()));
-            entity = this.recipeRepository.save(entity);
+    @PreAuthorize("@recipeSecurity.isOwner(#id, #modifier)")
+    public Recipe update(long id, RecipeUpdateSpec spec, User modifier) throws RecipeException {
+        final RecipeEntity entity = this.findRecipeEntity(id);
+        boolean didModify = false;
+        if (spec.getTitle() != null) {
+            entity.setTitle(spec.getTitle());
+            didModify = true;
         }
-        return entity.getCachedRenderedText();
-    }
-
-    @Override
-    @PreAuthorize("@recipeSecurity.isOwner(#recipe, #owner)")
-    public Recipe updateRawText(Recipe recipe, User owner, String newRawText) {
-        final RecipeEntity entity = (RecipeEntity) recipe;
-        entity.setCachedRenderedText(null);
-        entity.setRawText(newRawText);
+        if (spec.getRawText() != null) {
+            entity.setRawText(spec.getRawText());
+            didModify = true;
+        }
+        if (spec.getPublic() != null) {
+            entity.setPublic(spec.getPublic());
+            didModify = true;
+        }
+        if (spec.getMainImage() != null) {
+            entity.setMainImage((S3ImageEntity) spec.getMainImage());
+            didModify = true;
+        }
+        if (didModify) {
+            entity.setModified(LocalDateTime.now());
+        }
         return this.recipeRepository.save(entity);
     }
 
     @Override
-    @PreAuthorize("@recipeSecurity.isOwner(#recipe, #oldOwner)")
-    public Recipe updateOwner(Recipe recipe, User oldOwner, User newOwner) {
-        final RecipeEntity entity = (RecipeEntity) recipe;
-        entity.setOwner((UserEntity) newOwner);
-        return this.recipeRepository.save(entity);
-    }
-
-    @Override
-    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #giver)")
-    public RecipeStar addStar(Recipe recipe, User giver) {
-        final RecipeStarEntity star = new RecipeStarEntity();
-        star.setOwner((UserEntity) giver);
-        star.setRecipe((RecipeEntity) recipe);
-        return this.recipeStarRepository.save(star);
-    }
-
-    @Override
-    public void deleteStar(RecipeStar recipeStar) {
-        this.recipeStarRepository.delete((RecipeStarEntity) recipeStar);
-    }
-
-    @Override
-    public void deleteStarByUser(Recipe recipe, User giver) throws RecipeException {
-        final RecipeStarEntity star = this.recipeStarRepository.findByOwnerAndRecipe(
-                        (UserEntity) giver,
-                        (RecipeEntity) recipe
-                ).orElseThrow(() -> new RecipeException(
-                        RecipeException.Type.INVALID_STAR,
-                        "No such star for user " + giver.getUsername() + " and recipe " + recipe.getId()
-                ));
-        this.recipeStarRepository.delete(star);
-    }
-
-    @Override
-    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #viewer)")
-    public int getStarCount(Recipe recipe, @Nullable User viewer) {
-        return this.recipeRepository.getStarCount(recipe.getId());
-    }
-
-    @Override
-    @PreAuthorize("@recipeSecurity.isOwner(#recipe, #owner)")
-    public Recipe setPublic(Recipe recipe, User owner, boolean isPublic) {
-        final RecipeEntity entity = (RecipeEntity) recipe;
-        entity.setPublic(isPublic);
-        return this.recipeRepository.save(entity);
-    }
-
-    @Override
-    public Recipe addViewer(Recipe recipe, User user) {
-        final RecipeEntity entity = (RecipeEntity) recipe;
+    @PreAuthorize("@recipeSecurity.isOwner(#id, #modifier)")
+    public Recipe addViewer(long id, User modifier, User viewer) throws RecipeException {
+        final RecipeEntity entity = this.recipeRepository.findByIdWithViewers(id).orElseThrow(() -> new RecipeException(
+                RecipeException.Type.INVALID_ID, "No such Recipe with id: " + id
+        ));
         final Set<UserEntity> viewers = new HashSet<>(entity.getViewerEntities());
-        viewers.add((UserEntity) user);
+        viewers.add((UserEntity) viewer);
         entity.setViewers(viewers);
         return this.recipeRepository.save(entity);
     }
 
     @Override
-    public Recipe removeViewer(Recipe recipe, User user) {
-        final RecipeEntity entity = (RecipeEntity) recipe;
+    @PreAuthorize("@recipeSecurity.isOwner(#id, #modifier)")
+    public Recipe removeViewer(long id, User modifier, User viewer) throws RecipeException {
+        final RecipeEntity entity = this.findRecipeEntity(id);
         final Set<UserEntity> viewers = new HashSet<>(entity.getViewerEntities());
-        viewers.remove((UserEntity) user);
+        viewers.remove((UserEntity) viewer);
         entity.setViewers(viewers);
         return this.recipeRepository.save(entity);
     }
 
     @Override
-    public Recipe clearViewers(Recipe recipe) {
-        final RecipeEntity entity = (RecipeEntity) recipe;
+    @PreAuthorize("@recipeSecurity.isOwner(#id, #modifier)")
+    public Recipe clearAllViewers(long id, User modifier) throws RecipeException {
+        final RecipeEntity entity = this.findRecipeEntity(id);
         entity.setViewers(new HashSet<>());
         return this.recipeRepository.save(entity);
     }
 
     @Override
-    @PreAuthorize("@recipeSecurity.isViewableBy(#recipe, #viewer)")
-    public int getViewerCount(Recipe recipe, User viewer) {
-        return this.recipeRepository.getViewerCount(recipe.getId());
-    }
-
-    @Override
-    public RecipeComment getCommentById(long id) throws RecipeException {
-        return this.recipeCommentRepository.findById(id)
-                .orElseThrow(() -> new RecipeException(
-                        RecipeException.Type.INVALID_ID,
-                        "No such RecipeComment for id " + id
-                ));
-    }
-
-    @Override
-    public RecipeComment addComment(Recipe recipe, String rawCommentText, User commenter) {
-        final RecipeCommentEntity draft = new RecipeCommentEntity();
-        draft.setRawText(rawCommentText);
-        draft.setOwner((UserEntity) commenter);
-        return this.recipeCommentRepository.save(draft);
-    }
-
-    @Override
-    public RecipeComment updateComment(RecipeComment comment, String newRawCommentText) {
-        final RecipeCommentEntity entity = (RecipeCommentEntity) comment;
-        entity.setCachedRenderedText(null);
-        entity.setRawText(newRawCommentText);
-        return this.recipeCommentRepository.save(entity);
-    }
-
-    @Override
-    public String getRenderedMarkdown(RecipeComment recipeComment) {
-        RecipeCommentEntity entity = (RecipeCommentEntity) recipeComment;
-        if (entity.getCachedRenderedText() == null) {
-            entity.setCachedRenderedText(renderAndCleanMarkdown(entity.getRawText()));
-            entity = this.recipeCommentRepository.save(entity);
-        }
-        return entity.getCachedRenderedText();
-    }
-
-    @Override
-    public void deleteComment(RecipeComment comment) {
-        this.recipeCommentRepository.delete((RecipeCommentEntity) comment);
-    }
-
-    @Override
-    public Recipe clearComments(Recipe recipe) {
-        this.recipeCommentRepository.deleteAllByRecipe((RecipeEntity) recipe);
-        return this.recipeRepository.getReferenceById(recipe.getId());
-    }
-
-    @Override
-    @PreAuthorize("@recipeSecurity.isOwner(#recipe, #owner)")
-    public void deleteRecipe(Recipe recipe, User owner) {
-        this.recipeRepository.delete((RecipeEntity) recipe);
-    }
-
-    @Override
-    @PreAuthorize("@recipeSecurity.isOwner(#id, #owner)")
-    public void deleteById(long id, User owner) {
+    @PreAuthorize("@recipeSecurity.isOwner(#id, #modifier)")
+    public void deleteRecipe(long id, User modifier) {
         this.recipeRepository.deleteById(id);
     }
 

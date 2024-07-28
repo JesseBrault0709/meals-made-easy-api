@@ -1,5 +1,6 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.image.S3ImageEntity;
 import app.mealsmadeeasy.api.recipe.comment.RecipeComment;
 import app.mealsmadeeasy.api.recipe.comment.RecipeCommentEntity;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
@@ -42,7 +43,8 @@ public final class RecipeEntity implements Recipe {
     @JoinColumn(name = "owner_id", nullable = false)
     private UserEntity owner;
 
-    @OneToMany(mappedBy = "recipe")
+    @OneToMany
+    @JoinColumn(name = "recipeId")
     private Set<RecipeStarEntity> stars = new HashSet<>();
 
     @OneToMany(mappedBy = "recipe")
@@ -53,6 +55,9 @@ public final class RecipeEntity implements Recipe {
 
     @ManyToMany
     private Set<UserEntity> viewers = new HashSet<>();
+
+    @ManyToOne
+    private S3ImageEntity mainImage;
 
     @Override
     public Long getId() {
@@ -167,6 +172,15 @@ public final class RecipeEntity implements Recipe {
     @Override
     public String toString() {
         return "RecipeEntity(" + this.id + ", " + this.title + ")";
+    }
+
+    @Override
+    public S3ImageEntity getMainImage() {
+        return this.mainImage;
+    }
+
+    public void setMainImage(S3ImageEntity image) {
+        this.mainImage = image;
     }
 
 }

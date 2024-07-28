@@ -1,46 +1,26 @@
 package app.mealsmadeeasy.api.recipe.star;
 
-import app.mealsmadeeasy.api.recipe.RecipeEntity;
-import app.mealsmadeeasy.api.user.UserEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
 
 import java.time.LocalDateTime;
 
 @Entity(name = "RecipeStar")
 public final class RecipeStarEntity implements RecipeStar {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(nullable = false)
-    private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "owner_id", nullable = false, updatable = false)
-    private UserEntity owner;
+    @EmbeddedId
+    private RecipeStarId id;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime date = LocalDateTime.now();
 
-    @ManyToOne
-    @JoinColumn(name = "recipe_id", nullable = false, updatable = false)
-    private RecipeEntity recipe;
-
-    @Override
-    public Long getId() {
+    public RecipeStarId getId() {
         return this.id;
     }
 
-    public void setId(long id) {
+    public void setId(RecipeStarId id) {
         this.id = id;
-    }
-
-    @Override
-    public UserEntity getOwner() {
-        return this.owner;
-    }
-
-    public void setOwner(UserEntity owner) {
-        this.owner = owner;
     }
 
     @Override
@@ -50,15 +30,6 @@ public final class RecipeStarEntity implements RecipeStar {
 
     public void setDate(LocalDateTime date) {
         this.date = date;
-    }
-
-    @Override
-    public RecipeEntity getRecipe() {
-        return this.recipe;
-    }
-
-    public void setRecipe(RecipeEntity recipe) {
-        this.recipe = recipe;
     }
 
     @Override

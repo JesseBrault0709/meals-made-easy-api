@@ -30,7 +30,7 @@ public class RecipeSecurityImpl implements RecipeSecurity {
     }
 
     @Override
-    public boolean isViewableBy(Recipe recipe, @Nullable User user) {
+    public boolean isViewableBy(Recipe recipe, @Nullable User user) throws RecipeException {
         if (recipe.isPublic()) {
             // public recipe
             return true;
@@ -42,7 +42,10 @@ public class RecipeSecurityImpl implements RecipeSecurity {
             return true;
         } else {
             // check if viewer
-            final RecipeEntity withViewers = this.recipeRepository.getByIdWithViewers(recipe.getId());
+            final RecipeEntity withViewers = this.recipeRepository.findByIdWithViewers(recipe.getId())
+                    .orElseThrow(() -> new RecipeException(
+                            RecipeException.Type.INVALID_ID, "No such Recipe with id: " + recipe.getId()
+                    ));
             for (final User viewer : withViewers.getViewers()) {
                 if (viewer.getId() != null && viewer.getId().equals(user.getId())) {
                     return true;
@@ -57,7 +60,7 @@ public class RecipeSecurityImpl implements RecipeSecurity {
     public boolean isViewableBy(long recipeId, @Nullable User user) throws RecipeException {
         final Recipe recipe = this.recipeRepository.findById(recipeId).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,
-                "No such Recipe with id " + recipeId
+                "No such Recipe with id: " + recipeId
         ));
         return this.isViewableBy(recipe, user);
     }
