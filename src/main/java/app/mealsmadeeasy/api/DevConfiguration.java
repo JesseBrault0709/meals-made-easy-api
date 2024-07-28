@@ -44,10 +44,27 @@ public class DevConfiguration {
             );
             logger.info("Created {}", testUser);
 
+            final ImageCreateInfoSpec obazdaCreateSpec = new ImageCreateInfoSpec();
+            obazdaCreateSpec.setAlt("Obazda");
+            obazdaCreateSpec.setCaption("German Obazda.");
+            obazdaCreateSpec.setPublic(true);
+            final Image obazdaImage;
+            try (final InputStream obazdaStream = DevConfiguration.class.getResourceAsStream("Obazda.jpg")) {
+                obazdaImage = this.imageService.create(
+                        testUser,
+                        "Obazda.jpg",
+                        obazdaStream,
+                        48654L,
+                        obazdaCreateSpec
+                );
+            }
+            logger.info("Created {}", obazdaImage);
+
             final RecipeCreateSpec recipeCreateSpec = new RecipeCreateSpec();
             recipeCreateSpec.setTitle("Test Recipe");
             recipeCreateSpec.setRawText("Hello, World!");
             recipeCreateSpec.setPublic(true);
+            recipeCreateSpec.setMainImage(obazdaImage);
             final Recipe recipe = this.recipeService.create(testUser, recipeCreateSpec);
             logger.info("Created {}", recipe);
 
