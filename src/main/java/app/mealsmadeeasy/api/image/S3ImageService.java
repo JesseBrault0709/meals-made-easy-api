@@ -2,9 +2,11 @@ package app.mealsmadeeasy.api.image;
 
 import app.mealsmadeeasy.api.image.spec.ImageCreateInfoSpec;
 import app.mealsmadeeasy.api.image.spec.ImageUpdateInfoSpec;
+import app.mealsmadeeasy.api.image.view.ImageView;
 import app.mealsmadeeasy.api.s3.S3Manager;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
+import app.mealsmadeeasy.api.user.view.UserInfoView;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -27,15 +29,18 @@ public class S3ImageService implements ImageService {
     private final S3Manager s3Manager;
     private final S3ImageRepository imageRepository;
     private final String imageBucketName;
+    private final String baseUrl;
 
     public S3ImageService(
             S3Manager s3Manager,
             S3ImageRepository imageRepository,
-            @Value("${app.mealsmadeeasy.api.images.bucketName}") String imageBucketName
+            @Value("${app.mealsmadeeasy.api.images.bucketName}") String imageBucketName,
+            @Value("${app.mealsmadeeasy.api.baseUrl}") String baseUrl
     ) {
         this.s3Manager = s3Manager;
         this.imageRepository = imageRepository;
         this.imageBucketName = imageBucketName;
+        this.baseUrl = baseUrl;
     }
 
     private String getMimeType(String userFilename) {
@@ -177,6 +182,36 @@ public class S3ImageService implements ImageService {
         final S3ImageEntity imageEntity = (S3ImageEntity) image;
         this.imageRepository.delete(imageEntity);
         this.s3Manager.delete("images", imageEntity.getObjectName());
+    }
+
+    @Override
+    public ImageView toImageView(Image image) {
+        final ImageView imageView = new ImageView();
+        imageView.setUrl(this.baseUrl + "/images/" + image.getOwner().getUsername() + "/" + image.getUserFilename());
+        imageView.setCreated(image.getCreated());
+        imageView.setModified(image.getModified());
+        imageView.setFilename(image.getUserFilename());
+        imageView.setMimeType(image.getMimeType());
+        imageView.setAlt(image.getAlt());
+        imageView.setCaption(image.getCaption());
+        imageView.setIsPublic(image.isPublic());
+
+        final User owner = image.getOwner();
+        final UserInfoView userInfoView = new UserInfoView();
+        userInfoView.setId(owner.getId());
+        userInfoView.setUsername(owner.getUsername());
+        imageView.setOwner(userInfoView);
+
+        final Set<UserInfoView> viewers = new HashSet<>();
+        for (final User viewer : image.getViewers()) {
+            final UserInfoView viewerView = new UserInfoView();
+            viewerView.setId(viewer.getId());
+            viewerView.setUsername(viewer.getUsername());
+            viewers.add(viewerView);
+        }
+        imageView.setViewers(viewers);
+
+        return imageView;
     }
 
 }

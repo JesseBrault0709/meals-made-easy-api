@@ -8,6 +8,7 @@ import java.util.Set;
 
 public class ImageView {
 
+    private String url;
     private LocalDateTime created;
     private @Nullable LocalDateTime modified;
     private String filename;
@@ -17,6 +18,14 @@ public class ImageView {
     private UserInfoView owner;
     private boolean isPublic;
     private Set<UserInfoView> viewers;
+
+    public String getUrl() {
+        return this.url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
 
     public LocalDateTime getCreated() {
         return this.created;

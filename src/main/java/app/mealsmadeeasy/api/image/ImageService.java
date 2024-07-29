@@ -2,6 +2,7 @@ package app.mealsmadeeasy.api.image;
 
 import app.mealsmadeeasy.api.image.spec.ImageCreateInfoSpec;
 import app.mealsmadeeasy.api.image.spec.ImageUpdateInfoSpec;
+import app.mealsmadeeasy.api.image.view.ImageView;
 import app.mealsmadeeasy.api.user.User;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,5 +24,7 @@ public interface ImageService {
     Image update(Image image, User modifier, ImageUpdateInfoSpec spec);
 
     void deleteImage(Image image, User modifier) throws IOException;
+
+    ImageView toImageView(Image image);
 
 }
