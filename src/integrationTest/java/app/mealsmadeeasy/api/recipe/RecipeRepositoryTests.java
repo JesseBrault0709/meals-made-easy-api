@@ -42,6 +42,7 @@ public class RecipeRepositoryTests {
     @DirtiesContext
     public void findsAllPublicRecipes() {
         final RecipeEntity publicRecipe = new RecipeEntity();
+        publicRecipe.setSlug("public-recipe");
         publicRecipe.setPublic(true);
         publicRecipe.setOwner(this.getOwnerUser());
         publicRecipe.setTitle("Public Recipe");
@@ -56,6 +57,7 @@ public class RecipeRepositoryTests {
     @DirtiesContext
     public void doesNotFindNonPublicRecipe() {
         final RecipeEntity nonPublicRecipe = new RecipeEntity();
+        nonPublicRecipe.setSlug("non-public-recipe");
         nonPublicRecipe.setOwner(this.getOwnerUser());
         nonPublicRecipe.setTitle("Non-Public Recipe");
         nonPublicRecipe.setRawText("Hello, World!");
@@ -69,6 +71,7 @@ public class RecipeRepositoryTests {
     @DirtiesContext
     public void findsAllForViewer() {
         final RecipeEntity recipe = new RecipeEntity();
+        recipe.setSlug("test-recipe");
         recipe.setOwner(this.getOwnerUser());
         recipe.setTitle("Test Recipe");
         recipe.setRawText("Hello, World!");
@@ -89,6 +92,7 @@ public class RecipeRepositoryTests {
     @DirtiesContext
     public void doesNotIncludeNonViewable() {
         final RecipeEntity recipe = new RecipeEntity();
+        recipe.setSlug("test-recipe");
         recipe.setOwner(this.getOwnerUser());
         recipe.setTitle("Test Recipe");
         recipe.setRawText("Hello, World!");

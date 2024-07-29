@@ -57,6 +57,16 @@ public class RecipeSecurityImpl implements RecipeSecurity {
     }
 
     @Override
+    public boolean isViewableBy(String ownerUsername, String slug, @Nullable User user) throws RecipeException {
+        final Recipe recipe = this.recipeRepository.findByOwnerUsernameAndSlug(ownerUsername, slug)
+                .orElseThrow(() -> new RecipeException(
+                        RecipeException.Type.INVALID_USERNAME_OR_SLUG,
+                        "No such Recipe for username " + ownerUsername + " and slug: " + slug
+                ));
+        return this.isViewableBy(recipe, user);
+    }
+
+    @Override
     public boolean isViewableBy(long recipeId, @Nullable User user) throws RecipeException {
         final Recipe recipe = this.recipeRepository.findById(recipeId).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID,

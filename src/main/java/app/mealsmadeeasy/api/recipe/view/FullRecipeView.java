@@ -10,6 +10,7 @@ public class FullRecipeView {
     private long id;
     private LocalDateTime created;
     private LocalDateTime modified;
+    private String slug;
     private String title;
     private String text;
     private long ownerId;
@@ -40,6 +41,14 @@ public class FullRecipeView {
 
     public void setModified(LocalDateTime modified) {
         this.modified = modified;
+    }
+
+    public String getSlug() {
+        return this.slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
     }
 
     public String getTitle() {

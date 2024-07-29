@@ -5,10 +5,19 @@ import org.jetbrains.annotations.Nullable;
 
 public class RecipeUpdateSpec {
 
+    private @Nullable String slug;
     private @Nullable String title;
     private @Nullable String rawText;
     private @Nullable Boolean isPublic;
     private @Nullable Image mainImage;
+
+    public @Nullable String getSlug() {
+        return this.slug;
+    }
+
+    public void setSlug(@Nullable String slug) {
+        this.slug = slug;
+    }
 
     public @Nullable String getTitle() {
         return this.title;

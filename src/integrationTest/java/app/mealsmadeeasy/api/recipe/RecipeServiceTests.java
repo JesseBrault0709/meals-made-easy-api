@@ -43,11 +43,16 @@ public class RecipeServiceTests {
     }
 
     private Recipe createTestRecipe(@Nullable User owner) {
-        return this.createTestRecipe(owner, false);
+        return this.createTestRecipe(owner, false, null);
     }
 
     private Recipe createTestRecipe(@Nullable User owner, boolean isPublic) {
+        return this.createTestRecipe(owner, isPublic, null);
+    }
+
+    private Recipe createTestRecipe(@Nullable User owner, boolean isPublic, @Nullable String slug) {
         final RecipeCreateSpec spec = new RecipeCreateSpec();
+        spec.setSlug(slug != null ? slug : "my-recipe");
         spec.setTitle("My Recipe");
         spec.setRawText("Hello!");
         spec.setPublic(isPublic);
@@ -88,6 +93,7 @@ public class RecipeServiceTests {
         final Recipe recipe = this.createTestRecipe(owner, true);
         final Recipe byId = this.recipeService.getById(recipe.getId(), null);
         assertThat(byId.getId(), is(recipe.getId()));
+        assertThat(byId.getSlug(), is(recipe.getSlug()));
         assertThat(byId.getTitle(), is("My Recipe"));
         assertThat(byId.getRawText(), is("Hello!"));
         assertThat(byId.isPublic(), is(true));
@@ -167,9 +173,9 @@ public class RecipeServiceTests {
         final User u0 = this.createTestUser("u0");
         final User u1 = this.createTestUser("u1");
 
-        final Recipe r0 = this.createTestRecipe(owner, true);
-        final Recipe r1 = this.createTestRecipe(owner, true);
-        final Recipe r2 = this.createTestRecipe(owner, true);
+        final Recipe r0 = this.createTestRecipe(owner, true, "r0");
+        final Recipe r1 = this.createTestRecipe(owner, true, "r1");
+        final Recipe r2 = this.createTestRecipe(owner, true, "r2");
 
         // r0.stars = 0, r1.stars = 1, r2.stars = 2
         this.recipeStarService.create(r1.getId(), u0.getUsername());
@@ -197,9 +203,9 @@ public class RecipeServiceTests {
         final User u1 = this.createTestUser("u1");
         final User viewer = this.createTestUser("recipeViewer");
 
-        Recipe r0 = this.createTestRecipe(owner); // not public
-        Recipe r1 = this.createTestRecipe(owner);
-        Recipe r2 = this.createTestRecipe(owner);
+        Recipe r0 = this.createTestRecipe(owner, false, "r0"); // not public
+        Recipe r1 = this.createTestRecipe(owner, false, "r1");
+        Recipe r2 = this.createTestRecipe(owner, false, "r2");
 
         for (final User starer : List.of(u0, u1)) {
             r0 = this.recipeService.addViewer(r0.getId(), owner, starer);
@@ -243,8 +249,8 @@ public class RecipeServiceTests {
     public void getPublicRecipes() {
         final User owner = this.createTestUser("recipeOwner");
 
-        Recipe r0 = this.createTestRecipe(owner, true);
-        Recipe r1 = this.createTestRecipe(owner, true);
+        Recipe r0 = this.createTestRecipe(owner, true, "r0");
+        Recipe r1 = this.createTestRecipe(owner, true, "r1");
 
         final List<Recipe> publicRecipes = this.recipeService.getPublicRecipes();
         assertThat(publicRecipes.size(), is(2));
@@ -279,6 +285,7 @@ public class RecipeServiceTests {
     public void updateRawText() throws RecipeException {
         final User owner = this.createTestUser("recipeOwner");
         final RecipeCreateSpec createSpec = new RecipeCreateSpec();
+        createSpec.setSlug("my-recipe");
         createSpec.setTitle("My Recipe");
         createSpec.setRawText("# A Heading");
         Recipe recipe = this.recipeService.create(owner, createSpec);

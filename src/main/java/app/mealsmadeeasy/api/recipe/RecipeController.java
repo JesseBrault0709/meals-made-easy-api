@@ -31,10 +31,14 @@ public class RecipeController {
         ));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<FullRecipeView> getById(@PathVariable long id, @AuthenticationPrincipal User user)
+    @GetMapping("/{username}/{slug}")
+    public ResponseEntity<FullRecipeView> getById(
+            @PathVariable String username,
+            @PathVariable String slug,
+            @AuthenticationPrincipal User viewer
+    )
             throws RecipeException {
-        return ResponseEntity.ok(this.recipeService.getFullViewById(id, user));
+        return ResponseEntity.ok(this.recipeService.getFullViewByUsernameAndSlug(username, slug, viewer));
     }
 
     @GetMapping

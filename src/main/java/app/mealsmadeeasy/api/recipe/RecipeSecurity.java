@@ -7,5 +7,6 @@ public interface RecipeSecurity {
     boolean isOwner(Recipe recipe, User user);
     boolean isOwner(long recipeId, User user) throws RecipeException;
     boolean isViewableBy(Recipe recipe, @Nullable User user) throws RecipeException;
+    boolean isViewableBy(String ownerUsername, String slug, @Nullable User user) throws RecipeException;
     boolean isViewableBy(long recipeId, @Nullable User user) throws RecipeException;
 }

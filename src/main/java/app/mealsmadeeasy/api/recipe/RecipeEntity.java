@@ -27,6 +27,9 @@ public final class RecipeEntity implements Recipe {
 
     private LocalDateTime modified;
 
+    @Column(nullable = false, unique = true)
+    private String slug;
+
     @Column(nullable = false)
     private String title;
 
@@ -84,6 +87,15 @@ public final class RecipeEntity implements Recipe {
 
     public void setModified(@Nullable LocalDateTime modified) {
         this.modified = modified;
+    }
+
+    @Override
+    public String getSlug() {
+        return this.slug;
+    }
+
+    public void setSlug(String slug) {
+        this.slug = slug;
     }
 
     @Override

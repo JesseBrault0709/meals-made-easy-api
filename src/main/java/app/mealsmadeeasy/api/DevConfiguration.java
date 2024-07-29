@@ -61,6 +61,7 @@ public class DevConfiguration {
             logger.info("Created {}", obazdaImage);
 
             final RecipeCreateSpec recipeCreateSpec = new RecipeCreateSpec();
+            recipeCreateSpec.setSlug("test-recipe");
             recipeCreateSpec.setTitle("Test Recipe");
             recipeCreateSpec.setRawText("Hello, World!");
             recipeCreateSpec.setPublic(true);

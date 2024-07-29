@@ -13,6 +13,7 @@ public interface Recipe {
     Long getId();
     LocalDateTime getCreated();
     @Nullable LocalDateTime getModified();
+    String getSlug();
     String getTitle();
     String getRawText();
     User getOwner();

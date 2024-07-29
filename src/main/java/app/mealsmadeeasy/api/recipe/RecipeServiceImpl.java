@@ -53,6 +53,7 @@ public class RecipeServiceImpl implements RecipeService {
         final RecipeEntity draft = new RecipeEntity();
         draft.setCreated(LocalDateTime.now());
         draft.setOwner((UserEntity) owner);
+        draft.setSlug(spec.getSlug());
         draft.setTitle(spec.getTitle());
         draft.setRawText(spec.getRawText());
         draft.setMainImage((S3ImageEntity) spec.getMainImage());
@@ -97,24 +98,42 @@ public class RecipeServiceImpl implements RecipeService {
         return this.recipeRepository.getViewerCount(recipeId);
     }
 
-    @Override
-    @PostAuthorize("@recipeSecurity.isViewableBy(#id, #viewer)")
-    public FullRecipeView getFullViewById(long id, @Nullable User viewer) throws RecipeException {
-        final RecipeEntity recipe = this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
-                RecipeException.Type.INVALID_ID, "No such Recipe for id: " + id
-        ));
+    private FullRecipeView getFullView(RecipeEntity recipe) {
         final FullRecipeView view = new FullRecipeView();
         view.setId(recipe.getId());
         view.setCreated(recipe.getCreated());
         view.setModified(recipe.getModified());
+        view.setSlug(recipe.getSlug());
         view.setTitle(recipe.getTitle());
         view.setText(this.getRenderedMarkdown(recipe));
         view.setOwnerId(recipe.getOwner().getId());
         view.setOwnerUsername(recipe.getOwner().getUsername());
         view.setStarCount(this.getStarCount(recipe));
         view.setViewerCount(this.getViewerCount(recipe.getId()));
-        view.setMainImage(this.imageService.toImageView(recipe.getMainImage()));
+        if (recipe.getMainImage() != null) {
+            view.setMainImage(this.imageService.toImageView(recipe.getMainImage()));
+        }
         return view;
+    }
+
+    @Override
+    @PreAuthorize("@recipeSecurity.isViewableBy(#id, #viewer)")
+    public FullRecipeView getFullViewById(long id, @Nullable User viewer) throws RecipeException {
+        final RecipeEntity recipe = this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
+                RecipeException.Type.INVALID_ID, "No such Recipe for id: " + id
+        ));
+        return this.getFullView(recipe);
+    }
+
+    @Override
+    @PreAuthorize("@recipeSecurity.isViewableBy(#username, #slug, #viewer)")
+    public FullRecipeView getFullViewByUsernameAndSlug(String username, String slug, @Nullable User viewer) throws RecipeException {
+        final RecipeEntity recipe = this.recipeRepository.findByOwnerUsernameAndSlug(username, slug)
+                .orElseThrow(() -> new RecipeException(
+                        RecipeException.Type.INVALID_USERNAME_OR_SLUG,
+                        "No such Recipe for username " + username + " and slug: " + slug
+                ));
+        return this.getFullView(recipe);
     }
 
     @Override
@@ -127,12 +146,14 @@ public class RecipeServiceImpl implements RecipeService {
             } else {
                 view.setUpdated(entity.getCreated());
             }
+            view.setSlug(entity.getSlug());
             view.setTitle(entity.getTitle());
-            view.setOwnerId(entity.getOwner().getId());
             view.setOwnerUsername(entity.getOwner().getUsername());
             view.setPublic(entity.isPublic());
             view.setStarCount(this.getStarCount(entity));
-            view.setMainImage(this.imageService.toImageView(entity.getMainImage()));
+            if (entity.getMainImage() != null) {
+                view.setMainImage(this.imageService.toImageView(entity.getMainImage()));
+            }
             return view;
         });
     }
@@ -164,6 +185,10 @@ public class RecipeServiceImpl implements RecipeService {
     public Recipe update(long id, RecipeUpdateSpec spec, User modifier) throws RecipeException {
         final RecipeEntity entity = this.findRecipeEntity(id);
         boolean didModify = false;
+        if (spec.getSlug() != null) {
+            entity.setSlug(spec.getSlug());
+            didModify = true;
+        }
         if (spec.getTitle() != null) {
             entity.setTitle(spec.getTitle());
             didModify = true;

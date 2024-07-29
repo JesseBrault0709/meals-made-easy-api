@@ -18,6 +18,9 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
 
     List<RecipeEntity> findAllByOwner(UserEntity owner);
 
+    @Query("SELECT r from Recipe r WHERE r.owner.username = ?1 AND r.slug = ?2")
+    Optional<RecipeEntity> findByOwnerUsernameAndSlug(String ownerUsername, String slug);
+
     @Query("SELECT r FROM Recipe r WHERE size(r.stars) >= ?1 AND (r.isPublic OR ?2 MEMBER OF r.viewers)")
     List<RecipeEntity> findAllViewableByStarsGreaterThanEqual(long stars, UserEntity viewer);
 
