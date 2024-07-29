@@ -6,7 +6,6 @@ import app.mealsmadeeasy.api.image.spec.ImageUpdateInfoSpec;
 import app.mealsmadeeasy.api.image.view.ImageView;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserService;
-import app.mealsmadeeasy.api.user.view.UserInfoView;
 import app.mealsmadeeasy.api.util.AccessDeniedView;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
@@ -20,40 +19,12 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/images")
 public class ImageController {
-
-    private static ImageView getView(Image image, User owner) {
-        final ImageView imageView = new ImageView();
-        imageView.setCreated(image.getCreated());
-        imageView.setModified(image.getModified());
-        imageView.setFilename(image.getUserFilename());
-        imageView.setMimeType(image.getMimeType());
-        imageView.setAlt(image.getAlt());
-        imageView.setCaption(image.getCaption());
-        imageView.setIsPublic(image.isPublic());
-
-        final UserInfoView userInfoView = new UserInfoView();
-        userInfoView.setId(owner.getId());
-        userInfoView.setUsername(owner.getUsername());
-        imageView.setOwner(userInfoView);
-
-        final Set<UserInfoView> viewers = new HashSet<>();
-        for (final User viewer : image.getViewers()) {
-            final UserInfoView viewerView = new UserInfoView();
-            viewerView.setId(viewer.getId());
-            viewerView.setUsername(viewer.getUsername());
-            viewers.add(viewerView);
-        }
-        imageView.setViewers(viewers);
-
-        return imageView;
-    }
 
     private final ImageService imageService;
     private final UserService userService;
@@ -140,7 +111,7 @@ public class ImageController {
                 image.getSize(),
                 createSpec
         );
-        return ResponseEntity.status(201).body(getView(saved, principal));
+        return ResponseEntity.status(201).body(ImageUtil.toImageView(saved));
     }
 
     @PostMapping("/{username}/{filename}")
@@ -156,7 +127,7 @@ public class ImageController {
         final User owner = this.userService.getUser(username);
         final Image image = this.imageService.getByOwnerAndFilename(owner, filename, principal);
         final Image updated = this.imageService.update(image, principal, this.getImageUpdateSpec(body));
-        return ResponseEntity.ok(getView(updated, owner));
+        return ResponseEntity.ok(ImageUtil.toImageView(updated));
     }
 
     @DeleteMapping("/{username}/{filename}")

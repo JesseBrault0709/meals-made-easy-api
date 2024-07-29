@@ -1,5 +1,7 @@
 package app.mealsmadeeasy.api.recipe.view;
 
+import app.mealsmadeeasy.api.image.view.ImageView;
+
 import java.time.LocalDateTime;
 
 public final class RecipeInfoView {
@@ -11,6 +13,7 @@ public final class RecipeInfoView {
     private String ownerUsername;
     private boolean isPublic;
     private int starCount;
+    private ImageView mainImage;
 
     public long getId() {
         return this.id;
@@ -66,6 +69,14 @@ public final class RecipeInfoView {
 
     public void setStarCount(int starCount) {
         this.starCount = starCount;
+    }
+
+    public ImageView getMainImage() {
+        return this.mainImage;
+    }
+
+    public void setMainImage(ImageView mainImage) {
+        this.mainImage = mainImage;
     }
 
 }

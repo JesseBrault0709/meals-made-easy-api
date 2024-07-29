@@ -1,5 +1,6 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.image.ImageUtil;
 import app.mealsmadeeasy.api.image.S3ImageEntity;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
@@ -109,6 +110,7 @@ public class RecipeServiceImpl implements RecipeService {
         view.setOwnerUsername(recipe.getOwner().getUsername());
         view.setStarCount(this.getStarCount(recipe));
         view.setViewerCount(this.getViewerCount(recipe.getId()));
+        view.setMainImage(ImageUtil.toImageView(recipe.getMainImage()));
         return view;
     }
 
@@ -127,6 +129,7 @@ public class RecipeServiceImpl implements RecipeService {
             view.setOwnerUsername(entity.getOwner().getUsername());
             view.setPublic(entity.isPublic());
             view.setStarCount(this.getStarCount(entity));
+            view.setMainImage(ImageUtil.toImageView(entity.getMainImage()));
             return view;
         });
     }

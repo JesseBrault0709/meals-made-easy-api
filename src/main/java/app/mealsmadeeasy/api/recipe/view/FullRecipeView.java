@@ -1,5 +1,6 @@
 package app.mealsmadeeasy.api.recipe.view;
 
+import app.mealsmadeeasy.api.image.view.ImageView;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public class FullRecipeView {
     private String ownerUsername;
     private int starCount;
     private int viewerCount;
+    private ImageView mainImage;
 
     public long getId() {
         return this.id;
@@ -86,6 +88,14 @@ public class FullRecipeView {
 
     public void setViewerCount(int viewerCount) {
         this.viewerCount = viewerCount;
+    }
+
+    public ImageView getMainImage() {
+        return this.mainImage;
+    }
+
+    public void setMainImage(ImageView mainImage) {
+        this.mainImage = mainImage;
     }
 
 }
