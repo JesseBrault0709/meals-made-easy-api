@@ -149,7 +149,7 @@ public class RecipeServiceImpl implements RecipeService {
             view.setSlug(entity.getSlug());
             view.setTitle(entity.getTitle());
             view.setOwnerUsername(entity.getOwner().getUsername());
-            view.setPublic(entity.isPublic());
+            view.setIsPublic(entity.isPublic());
             view.setStarCount(this.getStarCount(entity));
             if (entity.getMainImage() != null) {
                 view.setMainImage(this.imageService.toImageView(entity.getMainImage()));

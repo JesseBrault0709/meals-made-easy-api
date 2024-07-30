@@ -56,12 +56,12 @@ public final class RecipeInfoView {
         this.ownerUsername = ownerUsername;
     }
 
-    public boolean isPublic() {
+    public boolean getIsPublic() {
         return this.isPublic;
     }
 
-    public void setPublic(boolean aPublic) {
-        isPublic = aPublic;
+    public void setIsPublic(boolean isPublic) {
+        this.isPublic = isPublic;
     }
 
     public int getStarCount() {
