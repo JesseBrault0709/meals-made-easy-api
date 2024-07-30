@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+// TODO: get rid of viewers, keep it only for owner view!
 public class ImageView {
 
     private String url;
