@@ -6,6 +6,7 @@ import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.user.User;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,11 @@ public class RecipeController {
 
     @ExceptionHandler
     public ResponseEntity<RecipeExceptionView> onRecipeException(RecipeException recipeException) {
-        return ResponseEntity.badRequest().body(new RecipeExceptionView(
+        final HttpStatus status = switch (recipeException.getType()) {
+            case INVALID_ID, INVALID_USERNAME_OR_SLUG -> HttpStatus.NOT_FOUND;
+            case INVALID_COMMENT_ID -> HttpStatus.BAD_REQUEST;
+        };
+        return ResponseEntity.status(status.value()).body(new RecipeExceptionView(
                 recipeException.getType().toString(),
                 recipeException.getMessage()
         ));
