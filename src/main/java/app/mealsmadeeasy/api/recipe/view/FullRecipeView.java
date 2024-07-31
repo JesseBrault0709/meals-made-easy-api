@@ -9,7 +9,7 @@ public class FullRecipeView {
 
     private long id;
     private LocalDateTime created;
-    private LocalDateTime modified;
+    private @Nullable LocalDateTime modified;
     private String slug;
     private String title;
     private String text;
@@ -35,11 +35,11 @@ public class FullRecipeView {
         this.created = created;
     }
 
-    public LocalDateTime getModified() {
+    public @Nullable LocalDateTime getModified() {
         return this.modified;
     }
 
-    public void setModified(LocalDateTime modified) {
+    public void setModified(@Nullable LocalDateTime modified) {
         this.modified = modified;
     }
 
