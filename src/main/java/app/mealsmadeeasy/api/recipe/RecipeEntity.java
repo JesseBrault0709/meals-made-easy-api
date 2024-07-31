@@ -33,12 +33,13 @@ public final class RecipeEntity implements Recipe {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
     @Lob
+    @Column(name = "raw_text", columnDefinition = "TEXT", nullable = false)
     @Basic(fetch = FetchType.LAZY)
     private String rawText;
 
     @Lob
+    @Column(name = "cached_rendered_text", columnDefinition = "TEXT")
     @Basic(fetch = FetchType.LAZY)
     private String cachedRenderedText;
 
