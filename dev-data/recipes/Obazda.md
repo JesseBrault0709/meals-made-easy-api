@@ -3,7 +3,7 @@ title: German (Bavarian) Obazda
 slug: obazda
 isPublic: true
 mainImage:
-  src: images/Obazda.jpg
+  src: Obazda.jpg
   title: Obazda
   alt: Obazda.
   caption: German Obazda.

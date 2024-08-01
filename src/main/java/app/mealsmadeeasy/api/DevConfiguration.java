@@ -87,7 +87,7 @@ public class DevConfiguration {
                     imageCreateSpec.setCaption(frontMatter.mainImage.caption);
                     imageCreateSpec.setPublic(frontMatter.mainImage.isPublic);
                     final Path givenPath = Path.of(frontMatter.mainImage.src);
-                    final Path resolvedPath = Path.of("dev-data").resolve(givenPath);
+                    final Path resolvedPath = Path.of("dev-data", "images").resolve(givenPath);
                     final Image mainImage;
                     try (final InputStream inputStream = new FileInputStream(resolvedPath.toFile())) {
                         final long size = Files.size(resolvedPath);
