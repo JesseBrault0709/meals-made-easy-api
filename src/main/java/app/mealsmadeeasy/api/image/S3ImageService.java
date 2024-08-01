@@ -51,6 +51,7 @@ public class S3ImageService implements ImageService {
                 case "jpg", "jpeg" -> "image/jpeg";
                 case "png" -> "image/png";
                 case "svg" -> "image/svg+xml";
+                case "webp" -> "image/webp";
                 default -> throw new IllegalArgumentException("Cannot determine mime type for extension: " + extension);
             };
         } else {
@@ -63,9 +64,10 @@ public class S3ImageService implements ImageService {
             case "image/jpeg" -> "jpg";
             case "image/png" -> "png";
             case "image/svg+xml" -> "svg";
+            case "image/webp" -> "webp";
             default -> throw new ImageException(
                     ImageException.Type.UNKNOWN_MIME_TYPE,
-                    "unknown mime type: " + mimeType
+                    "Unknown mime type: " + mimeType
             );
         };
     }
