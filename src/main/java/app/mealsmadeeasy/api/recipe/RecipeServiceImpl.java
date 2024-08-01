@@ -113,6 +113,7 @@ public class RecipeServiceImpl implements RecipeService {
         if (recipe.getMainImage() != null) {
             view.setMainImage(this.imageService.toImageView(recipe.getMainImage()));
         }
+        view.setIsPublic(recipe.isPublic());
         return view;
     }
 

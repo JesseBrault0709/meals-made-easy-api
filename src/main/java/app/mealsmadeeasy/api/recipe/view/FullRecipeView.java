@@ -18,6 +18,7 @@ public class FullRecipeView {
     private int starCount;
     private int viewerCount;
     private ImageView mainImage;
+    private boolean isPublic;
 
     public long getId() {
         return this.id;
@@ -105,6 +106,14 @@ public class FullRecipeView {
 
     public void setMainImage(ImageView mainImage) {
         this.mainImage = mainImage;
+    }
+
+    public boolean getIsPublic() {
+        return this.isPublic;
+    }
+
+    public void setIsPublic(boolean isPublic) {
+        this.isPublic = isPublic;
     }
 
 }
