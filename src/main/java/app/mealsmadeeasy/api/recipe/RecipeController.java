@@ -24,7 +24,7 @@ public class RecipeController {
         this.recipeService = recipeService;
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(RecipeException.class)
     public ResponseEntity<RecipeExceptionView> onRecipeException(RecipeException recipeException) {
         final HttpStatus status = switch (recipeException.getType()) {
             case INVALID_ID, INVALID_USERNAME_OR_SLUG -> HttpStatus.NOT_FOUND;
