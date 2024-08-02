@@ -59,7 +59,8 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.text").value("<h1>Hello, World!</h1>"))
                 .andExpect(jsonPath("$.ownerUsername").value(owner.getUsername()))
                 .andExpect(jsonPath("$.starCount").value(0))
-                .andExpect(jsonPath("$.viewerCount").value(0));
+                .andExpect(jsonPath("$.viewerCount").value(0))
+                .andExpect(jsonPath("$.isPublic").value(true));
     }
 
     @Test
@@ -78,7 +79,7 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.content[0].slug").value(recipe.getSlug()))
                 .andExpect(jsonPath("$.content[0].title").value(recipe.getTitle()))
                 .andExpect(jsonPath("$.content[0].ownerUsername").value(owner.getUsername()))
-                .andExpect(jsonPath("$.content[0].public").value(true))
+                .andExpect(jsonPath("$.content[0].isPublic").value(true))
                 .andExpect(jsonPath("$.content[0].starCount").value(0));
     }
 
