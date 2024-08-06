@@ -38,8 +38,13 @@ public final class JwtFilter extends OncePerRequestFilter {
         this.objectMapper = objectMapper;
     }
 
-    private void handleSecurityException(HttpServletResponse response, int status, String message) throws IOException {
-        final SecurityExceptionView view = new SecurityExceptionView(status, message);
+    private void handleSecurityException(
+            HttpServletResponse response,
+            int status,
+            SecurityExceptionView.Action action,
+            String message
+    ) throws IOException {
+        final SecurityExceptionView view = new SecurityExceptionView(status, action, message);
         response.setStatus(status);
         response.getWriter().write(this.objectMapper.writeValueAsString(view));
     }
@@ -62,12 +67,18 @@ public final class JwtFilter extends OncePerRequestFilter {
                 this.handleSecurityException(
                         response,
                         HttpServletResponse.SC_UNAUTHORIZED,
+                        SecurityExceptionView.Action.REFRESH,
                         expiredJwtException.getMessage()
                 );
                 return;
             } catch (JwtException jwtException) {
                 logger.error("Error while getting username from token.", jwtException);
-                this.handleSecurityException(response, HttpServletResponse.SC_UNAUTHORIZED, jwtException.getMessage());
+                this.handleSecurityException(
+                        response,
+                        HttpServletResponse.SC_UNAUTHORIZED,
+                        SecurityExceptionView.Action.REFRESH,
+                        jwtException.getMessage()
+                );
                 return;
             }
             final UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
