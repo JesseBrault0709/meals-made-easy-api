@@ -2,7 +2,8 @@ package app.mealsmadeeasy.api.security;
 
 import app.mealsmadeeasy.api.jwt.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.security.SecurityException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,6 +38,12 @@ public final class JwtFilter extends OncePerRequestFilter {
         this.objectMapper = objectMapper;
     }
 
+    private void handleSecurityException(HttpServletResponse response, int status, String message) throws IOException {
+        final SecurityExceptionView view = new SecurityExceptionView(status, message);
+        response.setStatus(status);
+        response.getWriter().write(this.objectMapper.writeValueAsString(view));
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -51,11 +58,16 @@ public final class JwtFilter extends OncePerRequestFilter {
             final String username;
             try {
                 username = this.jwtService.getSubject(token);
-            } catch (SecurityException e) {
-                logger.error("Error while getting username from token.", e);
-                final SecurityExceptionView view = new SecurityExceptionView(401, e.getMessage());
-                response.setStatus(401);
-                response.getWriter().write(this.objectMapper.writeValueAsString(view));
+            } catch (ExpiredJwtException expiredJwtException) {
+                this.handleSecurityException(
+                        response,
+                        HttpServletResponse.SC_UNAUTHORIZED,
+                        expiredJwtException.getMessage()
+                );
+                return;
+            } catch (JwtException jwtException) {
+                logger.error("Error while getting username from token.", jwtException);
+                this.handleSecurityException(response, HttpServletResponse.SC_UNAUTHORIZED, jwtException.getMessage());
                 return;
             }
             final UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);

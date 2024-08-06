@@ -28,21 +28,25 @@ public final class AuthController {
         this.authService = authService;
     }
 
+    private ResponseEntity<LoginView> getLoginViewResponseEntity(LoginDetails loginDetails) {
+        final AuthToken refreshToken = loginDetails.getRefreshToken();
+        final ResponseCookie refreshCookie = getRefreshTokenCookie(
+                refreshToken.getToken(),
+                refreshToken.getLifetime()
+        );
+        final var loginView = new LoginView(
+                loginDetails.getUsername(), loginDetails.getAccessToken().getToken()
+        );
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
+                .body(loginView);
+    }
+
     @PostMapping("/login")
     public ResponseEntity<LoginView> login(@RequestBody LoginBody loginBody) {
         try {
             final LoginDetails loginDetails = this.authService.login(loginBody.getUsername(), loginBody.getPassword());
-            final AuthToken refreshToken = loginDetails.getRefreshToken();
-            final ResponseCookie refreshCookie = getRefreshTokenCookie(
-                    refreshToken.getToken(),
-                    refreshToken.getLifetime()
-            );
-            final var loginView = new LoginView(
-                    loginDetails.getUsername(), loginDetails.getAccessToken().getToken()
-            );
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                    .body(loginView);
+            return this.getLoginViewResponseEntity(loginDetails);
         } catch (LoginException loginException) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
@@ -54,15 +58,7 @@ public final class AuthController {
     ) {
         try {
             final LoginDetails loginDetails = this.authService.refresh(oldRefreshToken);
-            final AuthToken newRefreshToken = loginDetails.getRefreshToken();
-            final ResponseCookie refreshCookie = getRefreshTokenCookie(
-                    newRefreshToken.getToken(),
-                    newRefreshToken.getLifetime()
-            );
-            final var loginView = new LoginView(loginDetails.getUsername(), loginDetails.getAccessToken().getToken());
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())
-                    .body(loginView);
+            return this.getLoginViewResponseEntity(loginDetails);
         } catch (LoginException loginException) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
