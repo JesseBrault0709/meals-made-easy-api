@@ -6,7 +6,7 @@ public final class SimpleAuthToken implements AuthToken {
 
     private final String token;
     private final long lifetime;
-    private LocalDateTime expires;
+    private final LocalDateTime expires;
 
     public SimpleAuthToken(String token, long lifetime, LocalDateTime expires) {
         this.token = token;
