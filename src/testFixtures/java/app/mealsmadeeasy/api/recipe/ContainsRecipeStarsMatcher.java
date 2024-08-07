@@ -8,7 +8,7 @@ import app.mealsmadeeasy.api.recipe.star.RecipeStarId;
 import java.util.List;
 import java.util.Objects;
 
-public class ContainsRecipeStarsMatcher extends ContainsItemsMatcher<RecipeStar, RecipeStarId> {
+public class ContainsRecipeStarsMatcher extends ContainsItemsMatcher<RecipeStar, RecipeStar, RecipeStarId> {
 
     public static ContainsRecipeStarsMatcher containsStars(RecipeStar... expected) {
         return new ContainsRecipeStarsMatcher(expected);
@@ -18,6 +18,7 @@ public class ContainsRecipeStarsMatcher extends ContainsItemsMatcher<RecipeStar,
         super(
                 List.of(allExpected),
                 o -> o instanceof RecipeStar,
+                recipeStar -> ((RecipeStarEntity) recipeStar).getId(),
                 recipeStar -> ((RecipeStarEntity) recipeStar).getId(),
                 (id0, id1) -> Objects.equals(id0.getRecipeId(), id1.getRecipeId())
                         && Objects.equals(id0.getOwnerUsername(), id1.getOwnerUsername())

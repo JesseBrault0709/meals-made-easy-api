@@ -9,31 +9,35 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class ContainsItemsMatcher<T, ID> extends BaseMatcher<Iterable<T>> {
+public class ContainsItemsMatcher<T, E, ID> extends BaseMatcher<Iterable<T>> {
 
-    private final List<T> allExpected;
+    private final List<E> allExpected;
     private final Predicate<Object> isT;
-    private final Function<T, ID> idFunction;
+    private final Function<T, ID> givenToIdFunction;
+    private final Function<E, ID> expectedToIdFunction;
     private final BiPredicate<ID, ID> equalsFunction;
 
     public ContainsItemsMatcher(
-            List<T> allExpected,
+            List<E> allExpected,
             Predicate<Object> isT,
-            Function<T, ID> idFunction,
+            Function<T, ID> givenToIdFunction,
+            Function<E, ID> expectedToIdFunction,
             BiPredicate<ID, ID> equalsFunction
     ) {
         this.allExpected = allExpected;
         this.isT = isT;
-        this.idFunction = idFunction;
+        this.givenToIdFunction = givenToIdFunction;
+        this.expectedToIdFunction = expectedToIdFunction;
         this.equalsFunction = equalsFunction;
     }
 
     public ContainsItemsMatcher(
-            List<T> allExpected,
+            List<E> allExpected,
             Predicate<Object> isT,
-            Function<T, ID> idFunction
+            Function<T, ID> givenToIdFunction,
+            Function<E, ID> expectedToIdFunction
     ) {
-        this(allExpected, isT, idFunction, Objects::equals);
+        this(allExpected, isT, givenToIdFunction, expectedToIdFunction, Objects::equals);
     }
 
     @SuppressWarnings("unchecked")
@@ -41,12 +45,12 @@ public class ContainsItemsMatcher<T, ID> extends BaseMatcher<Iterable<T>> {
     public boolean matches(Object o) {
         if (o instanceof Iterable<?> iterable) {
             checkExpected:
-            for (final T expected : this.allExpected) {
+            for (final E expected : this.allExpected) {
                 for (final Object item : iterable) {
                     if (
                             this.isT.test(item) && this.equalsFunction.test(
-                                    this.idFunction.apply((T) item),
-                                    this.idFunction.apply(expected)
+                                    this.givenToIdFunction.apply((T) item),
+                                    this.expectedToIdFunction.apply(expected)
                             )
                     ) {
                         continue checkExpected;
