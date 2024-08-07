@@ -15,8 +15,8 @@ public final class AuthController {
         final ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from("refresh-token")
                 .httpOnly(true)
                 .secure(true)
-                .sameSite("Lax")
-                .maxAge(maxAge);
+                .maxAge(maxAge)
+                .path("/");
         if (token != null) {
             b.value(token);
         }
