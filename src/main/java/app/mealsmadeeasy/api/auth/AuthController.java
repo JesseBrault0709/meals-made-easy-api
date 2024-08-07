@@ -1,6 +1,7 @@
 package app.mealsmadeeasy.api.auth;
 
 import app.mealsmadeeasy.api.security.AuthToken;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/auth")
 public final class AuthController {
 
-    private static ResponseCookie getRefreshTokenCookie(String token, long maxAge) {
+    private static ResponseCookie getRefreshTokenCookie(@Nullable String token, long maxAge) {
         final ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from("refresh-token")
                 .httpOnly(true)
                 .secure(true)
@@ -57,18 +58,23 @@ public final class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<LoginView> refresh(
-            @CookieValue(value = "refresh-token") String oldRefreshToken
+            @CookieValue(value = "refresh-token", required = false) @Nullable String oldRefreshToken
     ) {
-        try {
-            final LoginDetails loginDetails = this.authService.refresh(oldRefreshToken);
-            return this.getLoginViewResponseEntity(loginDetails);
-        } catch (LoginException loginException) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        if (oldRefreshToken != null) {
+            try {
+                final LoginDetails loginDetails = this.authService.refresh(oldRefreshToken);
+                return this.getLoginViewResponseEntity(loginDetails);
+            } catch (LoginException loginException) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
         }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@CookieValue(value = "refresh-token", required = false) String refreshToken) {
+    public ResponseEntity<?> logout(
+            @CookieValue(value = "refresh-token", required = false) @Nullable String refreshToken
+    ) {
         if (refreshToken != null) {
             this.authService.logout(refreshToken);
         }
