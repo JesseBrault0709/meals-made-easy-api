@@ -4,6 +4,7 @@ import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
 import app.mealsmadeeasy.api.recipe.star.RecipeStarService;
+import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
 import app.mealsmadeeasy.api.user.UserRepository;
@@ -11,11 +12,15 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
 
+import static app.mealsmadeeasy.api.recipe.ContainsRecipeInfoViewsForRecipesMatcher.containsRecipeInfoViewsForRecipes;
+import static app.mealsmadeeasy.api.recipe.ContainsRecipesMatcher.containsRecipes;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -190,9 +195,9 @@ public class RecipeServiceTests {
         assertThat(oneStar.size(), is(2));
         assertThat(twoStars.size(), is(1));
 
-        assertThat(zeroStars, ContainsRecipesMatcher.containsRecipes(r0, r1, r2));
-        assertThat(oneStar, ContainsRecipesMatcher.containsRecipes(r1, r2));
-        assertThat(twoStars, ContainsRecipesMatcher.containsRecipes(r2));
+        assertThat(zeroStars, containsRecipes(r0, r1, r2));
+        assertThat(oneStar, containsRecipes(r1, r2));
+        assertThat(twoStars, containsRecipes(r2));
     }
 
     @Test
@@ -239,9 +244,9 @@ public class RecipeServiceTests {
         assertThat(oneStarViewable.size(), is(2));
         assertThat(twoStarsViewable.size(), is (1));
 
-        assertThat(zeroStarsViewable, ContainsRecipesMatcher.containsRecipes(r0, r1, r2));
-        assertThat(oneStarViewable, ContainsRecipesMatcher.containsRecipes(r1, r2));
-        assertThat(twoStarsViewable, ContainsRecipesMatcher.containsRecipes(r2));
+        assertThat(zeroStarsViewable, containsRecipes(r0, r1, r2));
+        assertThat(oneStarViewable, containsRecipes(r1, r2));
+        assertThat(twoStarsViewable, containsRecipes(r2));
     }
 
     @Test
@@ -254,7 +259,23 @@ public class RecipeServiceTests {
 
         final List<Recipe> publicRecipes = this.recipeService.getPublicRecipes();
         assertThat(publicRecipes.size(), is(2));
-        assertThat(publicRecipes, ContainsRecipesMatcher.containsRecipes(r0, r1));
+        assertThat(publicRecipes, containsRecipes(r0, r1));
+    }
+
+    @Test
+    @DirtiesContext
+    public void getRecipeInfoViewsViewableByOwnerWhenPublicAndPrivate() {
+        final User owner = this.createTestUser("recipeOwner");
+        Recipe r0 = this.createTestRecipe(owner, true, "r0");
+        Recipe r1 = this.createTestRecipe(owner, false, "r1");
+
+        final Slice<RecipeInfoView> viewableInfoViewsSlice = this.recipeService.getInfoViewsViewableBy(
+                Pageable.ofSize(20),
+                owner
+        );
+        final List<RecipeInfoView> viewableInfos = viewableInfoViewsSlice.getContent();
+        assertThat(viewableInfos.size(), is(2));
+        assertThat(viewableInfos, containsRecipeInfoViewsForRecipes(r0, r1));
     }
 
     @Test
@@ -267,7 +288,7 @@ public class RecipeServiceTests {
         r0 = this.recipeService.addViewer(r0.getId(), owner, viewer);
         final List<Recipe> viewableRecipes = this.recipeService.getRecipesViewableBy(viewer);
         assertThat(viewableRecipes.size(), is(1));
-        assertThat(viewableRecipes, ContainsRecipesMatcher.containsRecipes(r0));
+        assertThat(viewableRecipes, containsRecipes(r0));
     }
 
     @Test
@@ -277,7 +298,7 @@ public class RecipeServiceTests {
         final Recipe r0 = this.createTestRecipe(owner);
         final List<Recipe> ownedRecipes = this.recipeService.getRecipesOwnedBy(owner);
         assertThat(ownedRecipes.size(), is(1));
-        assertThat(ownedRecipes, ContainsRecipesMatcher.containsRecipes(r0));
+        assertThat(ownedRecipes, containsRecipes(r0));
     }
 
     @Test

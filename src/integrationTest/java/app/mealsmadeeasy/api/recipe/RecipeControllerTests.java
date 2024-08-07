@@ -1,5 +1,7 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.auth.AuthService;
+import app.mealsmadeeasy.api.auth.LoginDetails;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserCreateException;
@@ -29,6 +31,9 @@ public class RecipeControllerTests {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private AuthService authService;
+
     private User createTestUser(String username) {
         try {
             return this.userService.createUser(username, username + "@test.com", "test");
@@ -37,13 +42,17 @@ public class RecipeControllerTests {
         }
     }
 
-    private Recipe createTestRecipe(User owner, boolean isPublic) {
+    private Recipe createTestRecipe(User owner, boolean isPublic, String slug) {
         final RecipeCreateSpec spec = new RecipeCreateSpec();
-        spec.setSlug("test-recipe");
+        spec.setSlug(slug);
         spec.setTitle("Test Recipe");
         spec.setRawText("# Hello, World!");
         spec.setPublic(isPublic);
         return this.recipeService.create(owner, spec);
+    }
+
+    private Recipe createTestRecipe(User owner, boolean isPublic) {
+        return this.createTestRecipe(owner, isPublic, "test-recipe");
     }
 
     @Test
@@ -81,6 +90,25 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.content[0].ownerUsername").value(owner.getUsername()))
                 .andExpect(jsonPath("$.content[0].isPublic").value(true))
                 .andExpect(jsonPath("$.content[0].starCount").value(0));
+    }
+
+    @Test
+    @DirtiesContext
+    public void getRecipeInfoViewsWithPrincipalIncludesPrivate() throws Exception {
+        final User owner = this.createTestUser("owner");
+        final Recipe r0 = this.createTestRecipe(owner, true, "r0");
+        final Recipe r1 = this.createTestRecipe(owner, true, "r1");
+        final Recipe r2 = this.createTestRecipe(owner, false, "r2");
+        final LoginDetails loginDetails = this.authService.login(owner.getUsername(), "test");
+        this.mockMvc.perform(
+                get("/recipes")
+                        .header("Authorization", "Bearer " + loginDetails.getAccessToken().getToken())
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.slice.number").value(0))
+                .andExpect(jsonPath("$.slice.size").value(20))
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content", hasSize(3)));
     }
 
 }

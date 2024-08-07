@@ -38,7 +38,7 @@ public interface RecipeRepository extends JpaRepository<RecipeEntity, Long> {
     @Query("SELECT size(r.viewers) FROM Recipe r WHERE r.id = ?1")
     int getViewerCount(long recipeId);
 
-    @Query("SELECT r FROM Recipe r WHERE r.isPublic OR ?1 MEMBER OF r.viewers")
+    @Query("SELECT r FROM Recipe r WHERE r.isPublic OR r.owner = ?1 OR ?1 MEMBER OF r.viewers")
     Slice<RecipeEntity> findAllViewableBy(UserEntity viewer, Pageable pageable);
 
 }
