@@ -6,6 +6,5 @@ import java.time.LocalDateTime;
 
 public interface RefreshToken extends AuthToken {
     LocalDateTime getIssued();
-    LocalDateTime getExpiration();
     boolean isRevoked();
 }

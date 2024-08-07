@@ -15,6 +15,7 @@ public final class AuthController {
         final ResponseCookie.ResponseCookieBuilder b = ResponseCookie.from("refresh-token")
                 .httpOnly(true)
                 .secure(true)
+                .sameSite("Lax")
                 .maxAge(maxAge);
         if (token != null) {
             b.value(token);
@@ -35,7 +36,9 @@ public final class AuthController {
                 refreshToken.getLifetime()
         );
         final var loginView = new LoginView(
-                loginDetails.getUsername(), loginDetails.getAccessToken().getToken()
+                loginDetails.getUsername(),
+                loginDetails.getAccessToken().getToken(),
+                loginDetails.getAccessToken().getExpires()
         );
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, refreshCookie.toString())

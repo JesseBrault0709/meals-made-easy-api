@@ -73,7 +73,7 @@ public final class AuthServiceImpl implements AuthService {
             if (old.isRevoked()) {
                 throw new LoginException("RefreshToken is revoked.");
             }
-            if (old.getExpiration().isBefore(LocalDateTime.now())) {
+            if (old.getExpires().isBefore(LocalDateTime.now())) {
                 throw new LoginException("RefreshToken is expired.");
             }
             final UserEntity principal = old.getOwner();

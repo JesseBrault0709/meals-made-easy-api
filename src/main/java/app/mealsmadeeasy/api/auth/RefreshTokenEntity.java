@@ -45,7 +45,7 @@ public class RefreshTokenEntity implements RefreshToken {
     }
 
     @Override
-    public LocalDateTime getExpiration() {
+    public LocalDateTime getExpires() {
         return this.expiration;
     }
 

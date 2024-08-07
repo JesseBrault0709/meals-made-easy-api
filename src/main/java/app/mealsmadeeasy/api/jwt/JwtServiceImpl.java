@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.Map;
 
@@ -33,14 +35,19 @@ public final class JwtServiceImpl implements JwtService {
     @Override
     public AuthToken generateAccessToken(String username) {
         final Instant now = Instant.now();
+        final Instant expires = Instant.from(now.plusSeconds(accessTokenLifetime));
         final String token = Jwts.builder()
                 .subject(username)
                 .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(this.accessTokenLifetime)))
+                .expiration(Date.from(expires))
                 .signWith(this.secretKey)
                 .json(this.serializer)
                 .compact();
-        return new SimpleAuthToken(token, this.accessTokenLifetime);
+        return new SimpleAuthToken(
+                token,
+                this.accessTokenLifetime,
+                LocalDateTime.ofInstant(expires, ZoneId.systemDefault())
+        );
     }
 
     @Override
