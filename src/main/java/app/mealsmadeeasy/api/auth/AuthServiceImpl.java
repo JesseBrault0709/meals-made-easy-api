@@ -2,7 +2,7 @@ package app.mealsmadeeasy.api.auth;
 
 import app.mealsmadeeasy.api.jwt.JwtService;
 import app.mealsmadeeasy.api.user.UserEntity;
-import io.jsonwebtoken.JwtException;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -45,10 +45,9 @@ public final class AuthServiceImpl implements AuthService {
     @Override
     public LoginDetails login(String username, String password) throws LoginException {
         try {
-            final Authentication authentication = this.authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                    username,
-                    password
-            ));
+            final Authentication authentication = this.authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
             final UserEntity principal = (UserEntity) authentication.getPrincipal();
             return new LoginDetails(
                     username,
@@ -56,7 +55,7 @@ public final class AuthServiceImpl implements AuthService {
                     this.createRefreshToken(principal)
             );
         } catch (AuthenticationException e) {
-            throw new LoginException(e);
+            throw new LoginException(LoginExceptionReason.INVALID_CREDENTIALS, e);
         }
     }
 
@@ -66,28 +65,32 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginDetails refresh(String refreshToken) throws LoginException {
-        try {
-            final RefreshTokenEntity old = this.refreshTokenRepository.findByToken(refreshToken)
-                    .orElseThrow(() -> new LoginException("No such refresh-token: " + refreshToken));
-            if (old.isRevoked()) {
-                throw new LoginException("RefreshToken is revoked.");
-            }
-            if (old.getExpires().isBefore(LocalDateTime.now())) {
-                throw new LoginException("RefreshToken is expired.");
-            }
-            final UserEntity principal = old.getOwner();
-            this.refreshTokenRepository.delete(old);
-
-            final String username = principal.getUsername();
-            return new LoginDetails(
-                    username,
-                    this.jwtService.generateAccessToken(username),
-                    this.createRefreshToken(principal)
-            );
-        } catch (JwtException e) {
-            throw new LoginException(e);
+    public LoginDetails refresh(@Nullable String refreshToken) throws LoginException {
+        if (refreshToken == null) {
+            throw new LoginException(LoginExceptionReason.NO_REFRESH_TOKEN, "No refresh token provided.");
         }
+
+        final RefreshTokenEntity old = this.refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new LoginException(
+                        LoginExceptionReason.INVALID_REFRESH_TOKEN,
+                        "No such refresh-token: " + refreshToken
+                ));
+        if (old.isRevoked()) {
+            throw new LoginException(LoginExceptionReason.INVALID_REFRESH_TOKEN, "RefreshToken is revoked.");
+        }
+        if (old.getExpires().isBefore(LocalDateTime.now())) {
+            throw new LoginException(LoginExceptionReason.EXPIRED_REFRESH_TOKEN, "RefreshToken is expired.");
+        }
+
+        final UserEntity principal = old.getOwner();
+        this.refreshTokenRepository.delete(old);
+
+        final String username = principal.getUsername();
+        return new LoginDetails(
+                username,
+                this.jwtService.generateAccessToken(username),
+                this.createRefreshToken(principal)
+        );
     }
 
 }

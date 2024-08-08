@@ -2,16 +2,20 @@ package app.mealsmadeeasy.api.auth;
 
 public final class LoginException extends Exception {
 
-    public LoginException(String message) {
+    private final LoginExceptionReason reason;
+
+    public LoginException(LoginExceptionReason reason, String message) {
         super(message);
+        this.reason = reason;
     }
 
-    public LoginException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public LoginException(Throwable cause) {
+    public LoginException(LoginExceptionReason reason, Throwable cause) {
         super(cause);
+        this.reason = reason;
+    }
+
+    public LoginExceptionReason getReason() {
+        return this.reason;
     }
 
 }

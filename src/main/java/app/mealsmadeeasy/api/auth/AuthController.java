@@ -46,29 +46,24 @@ public final class AuthController {
                 .body(loginView);
     }
 
+    @ExceptionHandler(LoginException.class)
+    public ResponseEntity<LoginExceptionView> onLoginException(LoginException ex) {
+        final LoginExceptionView loginExceptionView = new LoginExceptionView(ex.getReason(), ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(loginExceptionView);
+    }
+
     @PostMapping("/login")
-    public ResponseEntity<LoginView> login(@RequestBody LoginBody loginBody) {
-        try {
-            final LoginDetails loginDetails = this.authService.login(loginBody.getUsername(), loginBody.getPassword());
-            return this.getLoginViewResponseEntity(loginDetails);
-        } catch (LoginException loginException) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+    public ResponseEntity<LoginView> login(@RequestBody LoginBody loginBody) throws LoginException {
+        final LoginDetails loginDetails = this.authService.login(loginBody.getUsername(), loginBody.getPassword());
+        return this.getLoginViewResponseEntity(loginDetails);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<LoginView> refresh(
             @CookieValue(value = "refresh-token", required = false) @Nullable String oldRefreshToken
-    ) {
-        if (oldRefreshToken != null) {
-            try {
-                final LoginDetails loginDetails = this.authService.refresh(oldRefreshToken);
-                return this.getLoginViewResponseEntity(loginDetails);
-            } catch (LoginException loginException) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-        }
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    ) throws LoginException {
+        final LoginDetails loginDetails = this.authService.refresh(oldRefreshToken);
+        return this.getLoginViewResponseEntity(loginDetails);
     }
 
     @PostMapping("/logout")
