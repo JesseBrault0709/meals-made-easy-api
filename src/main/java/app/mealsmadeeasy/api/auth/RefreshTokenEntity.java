@@ -10,6 +10,10 @@ import java.time.temporal.ChronoUnit;
 public class RefreshTokenEntity implements RefreshToken {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(nullable = false, updatable = false)
+    private Long id;
+
     @Column(unique = true, nullable = false)
     private String token;
 
@@ -25,6 +29,14 @@ public class RefreshTokenEntity implements RefreshToken {
     @JoinColumn(nullable = false)
     @ManyToOne
     private UserEntity owner;
+
+    public Long getId() {
+        return this.id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
 
     @Override
     public String getToken() {
