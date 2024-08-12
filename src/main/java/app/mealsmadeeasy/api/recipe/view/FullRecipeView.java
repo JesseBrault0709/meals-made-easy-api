@@ -1,6 +1,7 @@
 package app.mealsmadeeasy.api.recipe.view;
 
 import app.mealsmadeeasy.api.image.view.ImageView;
+import app.mealsmadeeasy.api.user.view.UserInfoView;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
@@ -13,8 +14,9 @@ public class FullRecipeView {
     private String slug;
     private String title;
     private String text;
-    private long ownerId;
-    private String ownerUsername;
+    @Deprecated private long ownerId;
+    @Deprecated private String ownerUsername;
+    private UserInfoView owner;
     private int starCount;
     private int viewerCount;
     private ImageView mainImage;
@@ -68,20 +70,32 @@ public class FullRecipeView {
         this.text = text;
     }
 
+    @Deprecated
     public long getOwnerId() {
         return this.ownerId;
     }
 
+    @Deprecated
     public void setOwnerId(long ownerId) {
         this.ownerId = ownerId;
     }
 
+    @Deprecated
     public String getOwnerUsername() {
         return this.ownerUsername;
     }
 
+    @Deprecated
     public void setOwnerUsername(String ownerUsername) {
         this.ownerUsername = ownerUsername;
+    }
+
+    public UserInfoView getOwner() {
+        return this.owner;
+    }
+
+    public void setOwner(UserInfoView owner) {
+        this.owner = owner;
     }
 
     public int getStarCount() {

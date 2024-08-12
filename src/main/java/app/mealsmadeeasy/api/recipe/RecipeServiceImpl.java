@@ -8,6 +8,7 @@ import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
 import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
+import app.mealsmadeeasy.api.user.view.UserInfoView;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.Nullable;
@@ -106,8 +107,7 @@ public class RecipeServiceImpl implements RecipeService {
         view.setSlug(recipe.getSlug());
         view.setTitle(recipe.getTitle());
         view.setText(this.getRenderedMarkdown(recipe));
-        view.setOwnerId(recipe.getOwner().getId());
-        view.setOwnerUsername(recipe.getOwner().getUsername());
+        view.setOwner(UserInfoView.from(recipe.getOwner()));
         view.setStarCount(this.getStarCount(recipe));
         view.setViewerCount(this.getViewerCount(recipe.getId()));
         if (recipe.getMainImage() != null) {
@@ -149,7 +149,7 @@ public class RecipeServiceImpl implements RecipeService {
             }
             view.setSlug(entity.getSlug());
             view.setTitle(entity.getTitle());
-            view.setOwnerUsername(entity.getOwner().getUsername());
+            view.setOwner(UserInfoView.from(entity.getOwner()));
             view.setIsPublic(entity.isPublic());
             view.setStarCount(this.getStarCount(entity));
             if (entity.getMainImage() != null) {

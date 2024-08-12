@@ -1,6 +1,15 @@
 package app.mealsmadeeasy.api.user.view;
 
+import app.mealsmadeeasy.api.user.User;
+
 public class UserInfoView {
+
+    public static UserInfoView from(User user) {
+        final UserInfoView userInfoView = new UserInfoView();
+        userInfoView.setId(user.getId());
+        userInfoView.setUsername(user.getUsername());
+        return userInfoView;
+    }
 
     private long id;
     private String username;
