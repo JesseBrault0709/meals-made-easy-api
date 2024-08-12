@@ -14,8 +14,6 @@ public class FullRecipeView {
     private String slug;
     private String title;
     private String text;
-    @Deprecated private long ownerId;
-    @Deprecated private String ownerUsername;
     private UserInfoView owner;
     private int starCount;
     private int viewerCount;
@@ -68,26 +66,6 @@ public class FullRecipeView {
 
     public void setText(String text) {
         this.text = text;
-    }
-
-    @Deprecated
-    public long getOwnerId() {
-        return this.ownerId;
-    }
-
-    @Deprecated
-    public void setOwnerId(long ownerId) {
-        this.ownerId = ownerId;
-    }
-
-    @Deprecated
-    public String getOwnerUsername() {
-        return this.ownerUsername;
-    }
-
-    @Deprecated
-    public void setOwnerUsername(String ownerUsername) {
-        this.ownerUsername = ownerUsername;
     }
 
     public UserInfoView getOwner() {

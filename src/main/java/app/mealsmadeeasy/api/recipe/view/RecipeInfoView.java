@@ -12,10 +12,6 @@ public final class RecipeInfoView {
     private LocalDateTime updated;
     private String slug;
     private String title;
-
-    @Deprecated
-    private String ownerUsername;
-
     private UserInfoView owner;
     private boolean isPublic;
     private int starCount;
@@ -51,16 +47,6 @@ public final class RecipeInfoView {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    @Deprecated
-    public String getOwnerUsername() {
-        return this.ownerUsername;
-    }
-
-    @Deprecated
-    public void setOwnerUsername(String ownerUsername) {
-        this.ownerUsername = ownerUsername;
     }
 
     public UserInfoView getOwner() {
