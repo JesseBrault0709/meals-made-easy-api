@@ -152,6 +152,23 @@ public class RecipeControllerTests {
 
     @Test
     @DirtiesContext
+    public void getStarForRecipe() throws Exception {
+        final User owner = this.createTestUser("recipe-owner");
+        final User starer = this.createTestUser("recipe-starer");
+        final Recipe recipe = this.createTestRecipe(owner, true);
+        this.recipeStarService.create(recipe.getId(), starer.getUsername());
+        this.mockMvc.perform(
+                get("/recipes/{username}/{slug}/stars", recipe.getOwner().getUsername(), recipe.getSlug())
+                        .header("Authorization", "Bearer " + this.getAccessToken(starer))
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isStarred").value(true))
+                .andExpect(jsonPath("$.star").isMap())
+                .andExpect(jsonPath("$.star.date").exists());
+    }
+
+    @Test
+    @DirtiesContext
     public void deleteStarFromRecipe() throws Exception {
         final User owner = this.createTestUser("recipe-owner");
         final User starer = this.createTestUser("recipe-starer");

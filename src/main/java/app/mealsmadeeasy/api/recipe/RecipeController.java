@@ -6,6 +6,7 @@ import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
 import app.mealsmadeeasy.api.recipe.view.RecipeExceptionView;
 import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.user.User;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
@@ -72,6 +73,20 @@ public class RecipeController {
             @AuthenticationPrincipal User principal
     ) throws RecipeException {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.recipeStarService.create(username, slug, principal));
+    }
+
+    @GetMapping("/{username}/{slug}/stars")
+    public ResponseEntity<Map<String, Object>> getStar(
+            @PathVariable String username,
+            @PathVariable String slug,
+            @AuthenticationPrincipal User principal
+    ) throws RecipeException {
+        final @Nullable RecipeStar star = this.recipeStarService.find(username, slug, principal).orElse(null);
+        if (star != null) {
+            return ResponseEntity.ok(Map.of("isStarred", true, "star", star));
+        } else {
+            return ResponseEntity.ok(Map.of("isStarred", false));
+        }
     }
 
     @DeleteMapping("/{username}/{slug}/stars")

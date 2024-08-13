@@ -45,13 +45,10 @@ public class RecipeStarServiceImpl implements RecipeStarService {
     }
 
     @Override
-    public RecipeStar get(long recipeId, String ownerUsername) throws RecipeException {
-        return this.recipeStarRepository.findByRecipeIdAndOwnerUsername(recipeId, ownerUsername).orElseThrow(
-                () -> new RecipeException(
-                        RecipeException.Type.INVALID_ID,
-                        "No such RecipeStar for recipeId: " + recipeId + " and ownerUsername: " + ownerUsername
-                )
-        );
+    public Optional<RecipeStar> find(String recipeOwnerUsername, String recipeSlug, User starer) throws RecipeException {
+        final Recipe recipe = this.recipeService.getByUsernameAndSlug(recipeOwnerUsername, recipeSlug, starer);
+        return this.recipeStarRepository.findByRecipeIdAndOwnerUsername(recipe.getId(), starer.getUsername())
+                .map(RecipeStar.class::cast);
     }
 
     @Override

@@ -1,11 +1,13 @@
 package app.mealsmadeeasy.api.recipe.star;
 
 import app.mealsmadeeasy.api.recipe.Recipe;
+import app.mealsmadeeasy.api.recipe.RecipeException;
 import app.mealsmadeeasy.api.recipe.RecipeService;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserCreateException;
 import app.mealsmadeeasy.api.user.UserService;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -70,6 +72,21 @@ public class RecipeStarServiceTests {
                 starer.getUsername()
         ));
         assertThat(star.getDate(), is(notNullValue()));
+    }
+
+    @Test
+    @DirtiesContext
+    public void find() throws RecipeException {
+        final User owner = this.getTestUser("recipe-owner");
+        final User starer = this.getTestUser("recipe-starer");
+        final Recipe recipe = this.getTestRecipe(owner, "test-recipe", true);
+        this.recipeStarService.create(recipe.getId(), starer.getUsername());
+        final @Nullable RecipeStar star = this.recipeStarService.find(
+                recipe.getOwner().getUsername(),
+                recipe.getSlug(),
+                starer
+        ).orElse(null);
+        assertThat(star, is(notNullValue()));
     }
 
     @Test
