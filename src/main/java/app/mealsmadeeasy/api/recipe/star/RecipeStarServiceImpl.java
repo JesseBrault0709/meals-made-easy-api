@@ -59,4 +59,10 @@ public class RecipeStarServiceImpl implements RecipeStarService {
         this.recipeStarRepository.deleteByRecipeIdAndOwnerUsername(recipeId, ownerUsername);
     }
 
+    @Override
+    public void delete(String recipeOwnerUsername, String recipeSlug, User starer) throws RecipeException {
+        final Recipe recipe = this.recipeService.getByUsernameAndSlug(recipeOwnerUsername, recipeSlug, starer);
+        this.delete(recipe.getId(), starer.getUsername());
+    }
+
 }

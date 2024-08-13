@@ -72,4 +72,18 @@ public class RecipeStarServiceTests {
         assertThat(star.getDate(), is(notNullValue()));
     }
 
+    @Test
+    @DirtiesContext
+    public void deleteViaUsernameAndSlug() {
+        final User owner = this.getTestUser("recipe-owner");
+        final User starer = this.getTestUser("recipe-starer");
+        final Recipe recipe = this.getTestRecipe(owner, "test-recipe", true);
+        this.recipeStarService.create(recipe.getId(), starer.getUsername());
+        assertDoesNotThrow(() -> this.recipeStarService.delete(
+                recipe.getOwner().getUsername(),
+                recipe.getSlug(),
+                starer
+        ));
+    }
+
 }

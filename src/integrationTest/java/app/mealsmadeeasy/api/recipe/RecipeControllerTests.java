@@ -2,7 +2,9 @@ package app.mealsmadeeasy.api.recipe;
 
 import app.mealsmadeeasy.api.auth.AuthService;
 import app.mealsmadeeasy.api.auth.LoginDetails;
+import app.mealsmadeeasy.api.auth.LoginException;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
+import app.mealsmadeeasy.api.recipe.star.RecipeStarService;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserCreateException;
 import app.mealsmadeeasy.api.user.UserService;
@@ -14,8 +16,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -28,6 +29,9 @@ public class RecipeControllerTests {
 
     @Autowired
     private RecipeService recipeService;
+
+    @Autowired
+    private RecipeStarService recipeStarService;
 
     @Autowired
     private UserService userService;
@@ -57,6 +61,12 @@ public class RecipeControllerTests {
 
     private Recipe createTestRecipe(User owner, boolean isPublic) {
         return this.createTestRecipe(owner, isPublic, "test-recipe");
+    }
+
+    private String getAccessToken(User user) throws LoginException {
+        return this.authService.login(user.getUsername(), "test")
+                .getAccessToken()
+                .getToken();
     }
 
     @Test
@@ -132,15 +142,26 @@ public class RecipeControllerTests {
         final User owner = this.createTestUser("recipe-owner");
         final User starer = this.createTestUser("recipe-starer");
         final Recipe recipe = this.createTestRecipe(owner, true);
-        final String accessToken = this.authService.login(starer.getUsername(), "test")
-                .getAccessToken()
-                .getToken();
         this.mockMvc.perform(
                 post("/recipes/{username}/{slug}/stars", recipe.getOwner().getUsername(), recipe.getSlug())
-                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Authorization", "Bearer " + this.getAccessToken(starer))
         )
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.date").exists());
+    }
+
+    @Test
+    @DirtiesContext
+    public void deleteStarFromRecipe() throws Exception {
+        final User owner = this.createTestUser("recipe-owner");
+        final User starer = this.createTestUser("recipe-starer");
+        final Recipe recipe = this.createTestRecipe(owner, true);
+        this.recipeStarService.create(recipe.getId(), starer.getUsername());
+        this.mockMvc.perform(
+                delete("/recipes/{username}/{slug}/stars", recipe.getOwner().getUsername(), recipe.getSlug())
+                        .header("Authorization", "Bearer " + this.getAccessToken(starer))
+        )
+                .andExpect(status().isNoContent());
     }
 
 }

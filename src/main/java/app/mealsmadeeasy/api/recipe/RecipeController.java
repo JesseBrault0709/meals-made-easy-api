@@ -74,4 +74,14 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.recipeStarService.create(username, slug, principal));
     }
 
+    @DeleteMapping("/{username}/{slug}/stars")
+    public ResponseEntity<Object> removeStar(
+            @PathVariable String username,
+            @PathVariable String slug,
+            @AuthenticationPrincipal User principal
+    ) throws RecipeException {
+        this.recipeStarService.delete(username, slug, principal);
+        return ResponseEntity.noContent().build();
+    }
+
 }
