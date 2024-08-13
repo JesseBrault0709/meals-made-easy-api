@@ -143,7 +143,7 @@ public class RecipeControllerTests {
         final User starer = this.createTestUser("recipe-starer");
         final Recipe recipe = this.createTestRecipe(owner, true);
         this.mockMvc.perform(
-                post("/recipes/{username}/{slug}/stars", recipe.getOwner().getUsername(), recipe.getSlug())
+                post("/recipes/{username}/{slug}/star", recipe.getOwner().getUsername(), recipe.getSlug())
                         .header("Authorization", "Bearer " + this.getAccessToken(starer))
         )
                 .andExpect(status().isCreated())
@@ -158,7 +158,7 @@ public class RecipeControllerTests {
         final Recipe recipe = this.createTestRecipe(owner, true);
         this.recipeStarService.create(recipe.getId(), starer.getUsername());
         this.mockMvc.perform(
-                get("/recipes/{username}/{slug}/stars", recipe.getOwner().getUsername(), recipe.getSlug())
+                get("/recipes/{username}/{slug}/star", recipe.getOwner().getUsername(), recipe.getSlug())
                         .header("Authorization", "Bearer " + this.getAccessToken(starer))
         )
                 .andExpect(status().isOk())
@@ -175,7 +175,7 @@ public class RecipeControllerTests {
         final Recipe recipe = this.createTestRecipe(owner, true);
         this.recipeStarService.create(recipe.getId(), starer.getUsername());
         this.mockMvc.perform(
-                delete("/recipes/{username}/{slug}/stars", recipe.getOwner().getUsername(), recipe.getSlug())
+                delete("/recipes/{username}/{slug}/star", recipe.getOwner().getUsername(), recipe.getSlug())
                         .header("Authorization", "Bearer " + this.getAccessToken(starer))
         )
                 .andExpect(status().isNoContent());

@@ -66,7 +66,7 @@ public class RecipeController {
         return ResponseEntity.ok(view);
     }
 
-    @PostMapping("/{username}/{slug}/stars")
+    @PostMapping("/{username}/{slug}/star")
     public ResponseEntity<RecipeStar> addStar(
             @PathVariable String username,
             @PathVariable String slug,
@@ -75,7 +75,7 @@ public class RecipeController {
         return ResponseEntity.status(HttpStatus.CREATED).body(this.recipeStarService.create(username, slug, principal));
     }
 
-    @GetMapping("/{username}/{slug}/stars")
+    @GetMapping("/{username}/{slug}/star")
     public ResponseEntity<Map<String, Object>> getStar(
             @PathVariable String username,
             @PathVariable String slug,
@@ -89,7 +89,7 @@ public class RecipeController {
         }
     }
 
-    @DeleteMapping("/{username}/{slug}/stars")
+    @DeleteMapping("/{username}/{slug}/star")
     public ResponseEntity<Object> removeStar(
             @PathVariable String username,
             @PathVariable String slug,
