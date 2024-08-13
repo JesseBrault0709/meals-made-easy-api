@@ -85,6 +85,15 @@ public class RecipeServiceImpl implements RecipeService {
         ));
     }
 
+    @Override
+    @PostAuthorize("@recipeSecurity.isViewableBy(returnObject, #viewer)")
+    public Recipe getByUsernameAndSlug(String username, String slug, @Nullable User viewer) throws RecipeException {
+        return this.recipeRepository.findByOwnerUsernameAndSlug(username, slug).orElseThrow(() -> new RecipeException(
+                RecipeException.Type.INVALID_USERNAME_OR_SLUG,
+                "No such Recipe for username " + username + " and slug " + slug
+        ));
+    }
+
     private String getRenderedMarkdown(RecipeEntity entity) {
         if (entity.getCachedRenderedText() == null) {
             entity.setCachedRenderedText(renderAndCleanMarkdown(entity.getRawText()));

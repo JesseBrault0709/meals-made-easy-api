@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -123,6 +124,23 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.slice.size").value(20))
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content", hasSize(3)));
+    }
+
+    @Test
+    @DirtiesContext
+    public void addStarToRecipe() throws Exception {
+        final User owner = this.createTestUser("recipe-owner");
+        final User starer = this.createTestUser("recipe-starer");
+        final Recipe recipe = this.createTestRecipe(owner, true);
+        final String accessToken = this.authService.login(starer.getUsername(), "test")
+                .getAccessToken()
+                .getToken();
+        this.mockMvc.perform(
+                post("/recipes/{username}/{slug}/stars", recipe.getOwner().getUsername(), recipe.getSlug())
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.date").exists());
     }
 
 }

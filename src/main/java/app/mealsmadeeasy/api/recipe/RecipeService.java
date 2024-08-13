@@ -17,6 +17,8 @@ public interface RecipeService {
 
     Recipe getById(long id, @Nullable User viewer) throws RecipeException;
     Recipe getByIdWithStars(long id, @Nullable User viewer) throws RecipeException;
+    Recipe getByUsernameAndSlug(String username, String slug, @Nullable User viewer) throws RecipeException;
+
     FullRecipeView getFullViewById(long id, @Nullable User viewer) throws RecipeException;
     FullRecipeView getFullViewByUsernameAndSlug(String username, String slug, @Nullable User viewer) throws RecipeException;
 

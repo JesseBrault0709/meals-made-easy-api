@@ -1,5 +1,7 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.recipe.star.RecipeStar;
+import app.mealsmadeeasy.api.recipe.star.RecipeStarService;
 import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
 import app.mealsmadeeasy.api.recipe.view.RecipeExceptionView;
 import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
@@ -19,9 +21,11 @@ import java.util.Map;
 public class RecipeController {
 
     private final RecipeService recipeService;
+    private final RecipeStarService recipeStarService;
 
-    public RecipeController(RecipeService recipeService) {
+    public RecipeController(RecipeService recipeService, RecipeStarService recipeStarService) {
         this.recipeService = recipeService;
+        this.recipeStarService = recipeStarService;
     }
 
     @ExceptionHandler(RecipeException.class)
@@ -59,6 +63,15 @@ public class RecipeController {
         sliceInfo.put("number", slice.getNumber());
         view.put("slice", sliceInfo);
         return ResponseEntity.ok(view);
+    }
+
+    @PostMapping("/{username}/{slug}/stars")
+    public ResponseEntity<RecipeStar> addStar(
+            @PathVariable String username,
+            @PathVariable String slug,
+            @AuthenticationPrincipal User principal
+    ) throws RecipeException {
+        return ResponseEntity.status(HttpStatus.CREATED).body(this.recipeStarService.create(username, slug, principal));
     }
 
 }
