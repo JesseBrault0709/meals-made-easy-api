@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.annotation.DirtiesContext;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +43,7 @@ public class RecipeRepositoryTests {
     @DirtiesContext
     public void findsAllPublicRecipes() {
         final RecipeEntity publicRecipe = new RecipeEntity();
+        publicRecipe.setCreated(LocalDateTime.now());
         publicRecipe.setSlug("public-recipe");
         publicRecipe.setPublic(true);
         publicRecipe.setOwner(this.getOwnerUser());
@@ -57,6 +59,7 @@ public class RecipeRepositoryTests {
     @DirtiesContext
     public void doesNotFindNonPublicRecipe() {
         final RecipeEntity nonPublicRecipe = new RecipeEntity();
+        nonPublicRecipe.setCreated(LocalDateTime.now());
         nonPublicRecipe.setSlug("non-public-recipe");
         nonPublicRecipe.setOwner(this.getOwnerUser());
         nonPublicRecipe.setTitle("Non-Public Recipe");
@@ -71,6 +74,7 @@ public class RecipeRepositoryTests {
     @DirtiesContext
     public void findsAllForViewer() {
         final RecipeEntity recipe = new RecipeEntity();
+        recipe.setCreated(LocalDateTime.now());
         recipe.setSlug("test-recipe");
         recipe.setOwner(this.getOwnerUser());
         recipe.setTitle("Test Recipe");
@@ -92,6 +96,7 @@ public class RecipeRepositoryTests {
     @DirtiesContext
     public void doesNotIncludeNonViewable() {
         final RecipeEntity recipe = new RecipeEntity();
+        recipe.setCreated(LocalDateTime.now());
         recipe.setSlug("test-recipe");
         recipe.setOwner(this.getOwnerUser());
         recipe.setTitle("Test Recipe");

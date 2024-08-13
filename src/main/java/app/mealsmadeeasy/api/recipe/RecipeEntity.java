@@ -23,7 +23,7 @@ public final class RecipeEntity implements Recipe {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDateTime created = LocalDateTime.now();
+    private LocalDateTime created;
 
     private LocalDateTime modified;
 
@@ -32,6 +32,15 @@ public final class RecipeEntity implements Recipe {
 
     @Column(nullable = false)
     private String title;
+
+    @Nullable
+    private Integer preparationTime;
+
+    @Nullable
+    private Integer cookingTime;
+
+    @Nullable
+    private Integer totalTime;
 
     @Lob
     @Column(name = "raw_text", columnDefinition = "TEXT", nullable = false)
@@ -106,6 +115,33 @@ public final class RecipeEntity implements Recipe {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    @Override
+    public @Nullable Integer getPreparationTime() {
+        return this.preparationTime;
+    }
+
+    public void setPreparationTime(@Nullable Integer preparationTime) {
+        this.preparationTime = preparationTime;
+    }
+
+    @Override
+    public @Nullable Integer getCookingTime() {
+        return this.cookingTime;
+    }
+
+    public void setCookingTime(@Nullable Integer cookingTime) {
+        this.cookingTime = cookingTime;
+    }
+
+    @Override
+    public @Nullable Integer getTotalTime() {
+        return this.totalTime;
+    }
+
+    public void setTotalTime(@Nullable Integer totalTime) {
+        this.totalTime = totalTime;
     }
 
     @Override

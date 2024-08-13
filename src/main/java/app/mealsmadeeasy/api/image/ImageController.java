@@ -111,7 +111,7 @@ public class ImageController {
                 image.getSize(),
                 createSpec
         );
-        return ResponseEntity.status(201).body(this.imageService.toImageView(saved));
+        return ResponseEntity.status(201).body(this.imageService.toImageView(saved, principal));
     }
 
     @PostMapping("/{username}/{filename}")
@@ -127,7 +127,7 @@ public class ImageController {
         final User owner = this.userService.getUser(username);
         final Image image = this.imageService.getByOwnerAndFilename(owner, filename, principal);
         final Image updated = this.imageService.update(image, principal, this.getImageUpdateSpec(body));
-        return ResponseEntity.ok(this.imageService.toImageView(updated));
+        return ResponseEntity.ok(this.imageService.toImageView(updated, principal));
     }
 
     @DeleteMapping("/{username}/{filename}")

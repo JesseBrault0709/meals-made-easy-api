@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 // TODO: test mainImage included
+// TODO: test prep/cooking/total times included
 @SpringBootTest
 public class RecipeServiceTests {
 

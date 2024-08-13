@@ -7,6 +7,9 @@ public class RecipeCreateSpec {
 
     private String slug;
     private String title;
+    private @Nullable Integer preparationTime;
+    private @Nullable Integer cookingTime;
+    private @Nullable Integer totalTime;
     private String rawText;
     private boolean isPublic;
     private @Nullable Image mainImage;
@@ -25,6 +28,30 @@ public class RecipeCreateSpec {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public @Nullable Integer getPreparationTime() {
+        return this.preparationTime;
+    }
+
+    public void setPreparationTime(@Nullable Integer preparationTime) {
+        this.preparationTime = preparationTime;
+    }
+
+    public @Nullable Integer getCookingTime() {
+        return this.cookingTime;
+    }
+
+    public void setCookingTime(@Nullable Integer cookingTime) {
+        this.cookingTime = cookingTime;
+    }
+
+    public @Nullable Integer getTotalTime() {
+        return this.totalTime;
+    }
+
+    public void setTotalTime(@Nullable Integer totalTime) {
+        this.totalTime = totalTime;
     }
 
     public String getRawText() {

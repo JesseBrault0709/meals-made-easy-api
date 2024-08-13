@@ -46,6 +46,9 @@ public class RecipeControllerTests {
         final RecipeCreateSpec spec = new RecipeCreateSpec();
         spec.setSlug(slug);
         spec.setTitle("Test Recipe");
+        spec.setPreparationTime(10);
+        spec.setCookingTime(20);
+        spec.setTotalTime(30);
         spec.setRawText("# Hello, World!");
         spec.setPublic(isPublic);
         return this.recipeService.create(owner, spec);
@@ -63,8 +66,13 @@ public class RecipeControllerTests {
         this.mockMvc.perform(get("/recipes/{username}/{slug}", recipe.getOwner().getUsername(), recipe.getSlug()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.created").exists()) // TODO: better matching of exact LocalDateTime
+                .andExpect(jsonPath("$.modified").doesNotExist())
                 .andExpect(jsonPath("$.slug").value(recipe.getSlug()))
                 .andExpect(jsonPath("$.title").value("Test Recipe"))
+                .andExpect(jsonPath("$.preparationTime").value(recipe.getPreparationTime()))
+                .andExpect(jsonPath("$.cookingTime").value(recipe.getCookingTime()))
+                .andExpect(jsonPath("$.totalTime").value(recipe.getTotalTime()))
                 .andExpect(jsonPath("$.text").value("<h1>Hello, World!</h1>"))
                 .andExpect(jsonPath("$.owner.id").value(owner.getId()))
                 .andExpect(jsonPath("$.owner.username").value(owner.getUsername()))
@@ -85,9 +93,13 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content", hasSize(1)))
                 .andExpect(jsonPath("$.content[0].id").value(recipe.getId()))
-                .andExpect(jsonPath("$.content[0].updated").exists())
+                .andExpect(jsonPath("$.content[0].created").exists()) // TODO: better matching of exact LocalDateTime
+                .andExpect(jsonPath("$.content[0].modified").doesNotExist())
                 .andExpect(jsonPath("$.content[0].slug").value(recipe.getSlug()))
                 .andExpect(jsonPath("$.content[0].title").value(recipe.getTitle()))
+                .andExpect(jsonPath("$.content[0].preparationTime").value(recipe.getPreparationTime()))
+                .andExpect(jsonPath("$.content[0].cookingTime").value(recipe.getCookingTime()))
+                .andExpect(jsonPath("$.content[0].totalTime").value(recipe.getTotalTime()))
                 .andExpect(jsonPath("$.content[0].owner.id").value(owner.getId()))
                 .andExpect(jsonPath("$.content[0].owner.username").value(owner.getUsername()))
                 .andExpect(jsonPath("$.content[0].isPublic").value(true))

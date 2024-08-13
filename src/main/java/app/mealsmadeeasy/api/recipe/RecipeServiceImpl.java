@@ -1,16 +1,18 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.image.Image;
 import app.mealsmadeeasy.api.image.ImageService;
 import app.mealsmadeeasy.api.image.S3ImageEntity;
+import app.mealsmadeeasy.api.image.view.ImageView;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
 import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
 import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
-import app.mealsmadeeasy.api.user.view.UserInfoView;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
@@ -99,22 +101,31 @@ public class RecipeServiceImpl implements RecipeService {
         return this.recipeRepository.getViewerCount(recipeId);
     }
 
-    private FullRecipeView getFullView(RecipeEntity recipe) {
-        final FullRecipeView view = new FullRecipeView();
-        view.setId(recipe.getId());
-        view.setCreated(recipe.getCreated());
-        view.setModified(recipe.getModified());
-        view.setSlug(recipe.getSlug());
-        view.setTitle(recipe.getTitle());
-        view.setText(this.getRenderedMarkdown(recipe));
-        view.setOwner(UserInfoView.from(recipe.getOwner()));
-        view.setStarCount(this.getStarCount(recipe));
-        view.setViewerCount(this.getViewerCount(recipe.getId()));
-        if (recipe.getMainImage() != null) {
-            view.setMainImage(this.imageService.toImageView(recipe.getMainImage()));
+    @Contract("null, _ -> null")
+    private @Nullable ImageView getImageView(@Nullable Image image, @Nullable User viewer) {
+        if (image != null) {
+            return this.imageService.toImageView(image, viewer);
+        } else {
+            return null;
         }
-        view.setIsPublic(recipe.isPublic());
-        return view;
+    }
+
+    private FullRecipeView getFullView(RecipeEntity recipe, @Nullable User viewer) {
+        return FullRecipeView.from(
+                recipe,
+                this.getRenderedMarkdown(recipe),
+                this.getStarCount(recipe),
+                this.getViewerCount(recipe.getId()),
+                this.getImageView(recipe.getMainImage(), viewer)
+        );
+    }
+
+    private RecipeInfoView getInfoView(RecipeEntity recipe, @Nullable User viewer) {
+        return RecipeInfoView.from(
+                recipe,
+                this.getStarCount(recipe),
+                this.getImageView(recipe.getMainImage(), viewer)
+        );
     }
 
     @Override
@@ -123,7 +134,7 @@ public class RecipeServiceImpl implements RecipeService {
         final RecipeEntity recipe = this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID, "No such Recipe for id: " + id
         ));
-        return this.getFullView(recipe);
+        return this.getFullView(recipe, viewer);
     }
 
     @Override
@@ -134,29 +145,14 @@ public class RecipeServiceImpl implements RecipeService {
                         RecipeException.Type.INVALID_USERNAME_OR_SLUG,
                         "No such Recipe for username " + username + " and slug: " + slug
                 ));
-        return this.getFullView(recipe);
+        return this.getFullView(recipe, viewer);
     }
 
     @Override
     public Slice<RecipeInfoView> getInfoViewsViewableBy(Pageable pageable, @Nullable User viewer) {
-        return this.recipeRepository.findAllViewableBy((UserEntity) viewer, pageable).map(entity -> {
-            final RecipeInfoView view = new RecipeInfoView();
-            view.setId(entity.getId());
-            if (entity.getModified() != null) {
-                view.setUpdated(entity.getModified());
-            } else {
-                view.setUpdated(entity.getCreated());
-            }
-            view.setSlug(entity.getSlug());
-            view.setTitle(entity.getTitle());
-            view.setOwner(UserInfoView.from(entity.getOwner()));
-            view.setIsPublic(entity.isPublic());
-            view.setStarCount(this.getStarCount(entity));
-            if (entity.getMainImage() != null) {
-                view.setMainImage(this.imageService.toImageView(entity.getMainImage()));
-            }
-            return view;
-        });
+        return this.recipeRepository.findAllViewableBy((UserEntity) viewer, pageable).map(recipe ->
+                this.getInfoView(recipe, viewer)
+        );
     }
 
     @Override
@@ -192,6 +188,18 @@ public class RecipeServiceImpl implements RecipeService {
         }
         if (spec.getTitle() != null) {
             entity.setTitle(spec.getTitle());
+            didModify = true;
+        }
+        if (spec.getPreparationTime() != null) {
+            entity.setPreparationTime(spec.getPreparationTime());
+            didModify = true;
+        }
+        if (spec.getCookingTime() != null) {
+            entity.setCookingTime(spec.getCookingTime());
+            didModify = true;
+        }
+        if (spec.getTotalTime() != null) {
+            entity.setTotalTime(spec.getTotalTime());
             didModify = true;
         }
         if (spec.getRawText() != null) {

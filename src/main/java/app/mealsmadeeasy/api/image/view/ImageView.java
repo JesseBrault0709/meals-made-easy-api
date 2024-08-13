@@ -1,13 +1,34 @@
 package app.mealsmadeeasy.api.image.view;
 
+import app.mealsmadeeasy.api.image.Image;
 import app.mealsmadeeasy.api.user.view.UserInfoView;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-// TODO: get rid of viewers, keep it only for owner view!
 public class ImageView {
+
+    public static ImageView from(Image image, String url, boolean includeViewers) {
+        final ImageView view = new ImageView();
+        view.setUrl(url);
+        view.setCreated(image.getCreated());
+        view.setModified(image.getModified());
+        view.setFilename(image.getUserFilename());
+        view.setMimeType(image.getMimeType());
+        view.setAlt(image.getAlt());
+        view.setCaption(image.getCaption());
+        view.setOwner(UserInfoView.from(image.getOwner()));
+        view.setIsPublic(image.isPublic());
+        if (includeViewers) {
+            view.setViewers(image.getViewers().stream()
+                    .map(UserInfoView::from)
+                    .collect(Collectors.toSet())
+            );
+        }
+        return view;
+    }
 
     private String url;
     private LocalDateTime created;
@@ -18,7 +39,7 @@ public class ImageView {
     private @Nullable String caption;
     private UserInfoView owner;
     private boolean isPublic;
-    private Set<UserInfoView> viewers;
+    private @Nullable Set<UserInfoView> viewers;
 
     public String getUrl() {
         return this.url;
@@ -60,19 +81,19 @@ public class ImageView {
         this.mimeType = mimeType;
     }
 
-    public String getAlt() {
+    public @Nullable String getAlt() {
         return this.alt;
     }
 
-    public void setAlt(String alt) {
+    public void setAlt(@Nullable String alt) {
         this.alt = alt;
     }
 
-    public String getCaption() {
+    public @Nullable String getCaption() {
         return this.caption;
     }
 
-    public void setCaption(String caption) {
+    public void setCaption(@Nullable String caption) {
         this.caption = caption;
     }
 
@@ -92,11 +113,11 @@ public class ImageView {
         this.isPublic = isPublic;
     }
 
-    public Set<UserInfoView> getViewers() {
+    public @Nullable Set<UserInfoView> getViewers() {
         return this.viewers;
     }
 
-    public void setViewers(Set<UserInfoView> viewers) {
+    public void setViewers(@Nullable Set<UserInfoView> viewers) {
         this.viewers = viewers;
     }
 

@@ -25,6 +25,6 @@ public interface ImageService {
 
     void deleteImage(Image image, User modifier) throws IOException;
 
-    ImageView toImageView(Image image);
+    ImageView toImageView(Image image, @Nullable User viewer);
 
 }

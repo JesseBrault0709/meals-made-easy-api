@@ -6,7 +6,6 @@ import app.mealsmadeeasy.api.image.view.ImageView;
 import app.mealsmadeeasy.api.s3.S3Manager;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
-import app.mealsmadeeasy.api.user.view.UserInfoView;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.prepost.PostAuthorize;
@@ -21,7 +20,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-/* TODO: update modified LocalDateTime when updating */
 public class S3ImageService implements ImageService {
 
     private static final Pattern extensionPattern = Pattern.compile(".+\\.(.+)$");
@@ -186,34 +184,17 @@ public class S3ImageService implements ImageService {
         this.s3Manager.delete("images", imageEntity.getObjectName());
     }
 
+    private String getImageUrl(Image image) {
+        return this.baseUrl + "/images/" + image.getOwner().getUsername() + "/" + image.getUserFilename();
+    }
+
     @Override
-    public ImageView toImageView(Image image) {
-        final ImageView imageView = new ImageView();
-        imageView.setUrl(this.baseUrl + "/images/" + image.getOwner().getUsername() + "/" + image.getUserFilename());
-        imageView.setCreated(image.getCreated());
-        imageView.setModified(image.getModified());
-        imageView.setFilename(image.getUserFilename());
-        imageView.setMimeType(image.getMimeType());
-        imageView.setAlt(image.getAlt());
-        imageView.setCaption(image.getCaption());
-        imageView.setIsPublic(image.isPublic());
-
-        final User owner = image.getOwner();
-        final UserInfoView userInfoView = new UserInfoView();
-        userInfoView.setId(owner.getId());
-        userInfoView.setUsername(owner.getUsername());
-        imageView.setOwner(userInfoView);
-
-        final Set<UserInfoView> viewers = new HashSet<>();
-        for (final User viewer : image.getViewers()) {
-            final UserInfoView viewerView = new UserInfoView();
-            viewerView.setId(viewer.getId());
-            viewerView.setUsername(viewer.getUsername());
-            viewers.add(viewerView);
+    public ImageView toImageView(Image image, @Nullable User viewer) {
+        if (viewer != null && image.getOwner().getUsername().equals(viewer.getUsername())) {
+            return ImageView.from(image, this.getImageUrl(image), true);
+        } else {
+            return ImageView.from(image, this.getImageUrl(image), false);
         }
-        imageView.setViewers(viewers);
-
-        return imageView;
     }
 
 }

@@ -1,6 +1,7 @@
 package app.mealsmadeeasy.api.recipe.view;
 
 import app.mealsmadeeasy.api.image.view.ImageView;
+import app.mealsmadeeasy.api.recipe.Recipe;
 import app.mealsmadeeasy.api.user.view.UserInfoView;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,11 +9,39 @@ import java.time.LocalDateTime;
 
 public class FullRecipeView {
 
+    public static FullRecipeView from(
+            Recipe recipe,
+            String renderedText,
+            int starCount,
+            int viewerCount,
+            ImageView mainImage
+    ) {
+        final FullRecipeView view = new FullRecipeView();
+        view.setId(recipe.getId());
+        view.setCreated(recipe.getCreated());
+        view.setModified(recipe.getModified());
+        view.setSlug(recipe.getSlug());
+        view.setTitle(recipe.getTitle());
+        view.setPreparationTime(recipe.getPreparationTime());
+        view.setCookingTime(recipe.getCookingTime());
+        view.setTotalTime(recipe.getTotalTime());
+        view.setText(renderedText);
+        view.setOwner(UserInfoView.from(recipe.getOwner()));
+        view.setStarCount(starCount);
+        view.setViewerCount(viewerCount);
+        view.setMainImage(mainImage);
+        view.setIsPublic(recipe.isPublic());
+        return view;
+    }
+
     private long id;
     private LocalDateTime created;
     private @Nullable LocalDateTime modified;
     private String slug;
     private String title;
+    private @Nullable Integer preparationTime;
+    private @Nullable Integer cookingTime;
+    private @Nullable Integer totalTime;
     private String text;
     private UserInfoView owner;
     private int starCount;
@@ -58,6 +87,30 @@ public class FullRecipeView {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public @Nullable Integer getPreparationTime() {
+        return this.preparationTime;
+    }
+
+    public void setPreparationTime(@Nullable Integer preparationTime) {
+        this.preparationTime = preparationTime;
+    }
+
+    public @Nullable Integer getCookingTime() {
+        return this.cookingTime;
+    }
+
+    public void setCookingTime(@Nullable Integer cookingTime) {
+        this.cookingTime = cookingTime;
+    }
+
+    public @Nullable Integer getTotalTime() {
+        return this.totalTime;
+    }
+
+    public void setTotalTime(@Nullable Integer totalTime) {
+        this.totalTime = totalTime;
     }
 
     public @Nullable String getText() {

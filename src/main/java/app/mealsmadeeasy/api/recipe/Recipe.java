@@ -15,6 +15,9 @@ public interface Recipe {
     @Nullable LocalDateTime getModified();
     String getSlug();
     String getTitle();
+    @Nullable Integer getPreparationTime();
+    @Nullable Integer getCookingTime();
+    @Nullable Integer getTotalTime();
     String getRawText();
     User getOwner();
     Set<RecipeStar> getStars();
