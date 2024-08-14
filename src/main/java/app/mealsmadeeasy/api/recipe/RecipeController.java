@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -70,8 +71,11 @@ public class RecipeController {
     public ResponseEntity<RecipeStar> addStar(
             @PathVariable String username,
             @PathVariable String slug,
-            @AuthenticationPrincipal User principal
+            @Nullable @AuthenticationPrincipal User principal
     ) throws RecipeException {
+        if (principal == null) {
+            throw new AccessDeniedException("Must be logged in to star a recipe.");
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(this.recipeStarService.create(username, slug, principal));
     }
 
@@ -79,8 +83,11 @@ public class RecipeController {
     public ResponseEntity<Map<String, Object>> getStar(
             @PathVariable String username,
             @PathVariable String slug,
-            @AuthenticationPrincipal User principal
+            @Nullable @AuthenticationPrincipal User principal
     ) throws RecipeException {
+        if (principal == null) {
+            throw new AccessDeniedException("Must be logged in to get a recipe star.");
+        }
         final @Nullable RecipeStar star = this.recipeStarService.find(username, slug, principal).orElse(null);
         if (star != null) {
             return ResponseEntity.ok(Map.of("isStarred", true, "star", star));
@@ -93,8 +100,11 @@ public class RecipeController {
     public ResponseEntity<Object> removeStar(
             @PathVariable String username,
             @PathVariable String slug,
-            @AuthenticationPrincipal User principal
+            @Nullable @AuthenticationPrincipal User principal
     ) throws RecipeException {
+        if (principal == null) {
+            throw new AccessDeniedException("Must be logged in to delete a recipe star.");
+        }
         this.recipeStarService.delete(username, slug, principal);
         return ResponseEntity.noContent().build();
     }
