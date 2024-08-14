@@ -13,7 +13,6 @@ public class FullRecipeView {
             Recipe recipe,
             String renderedText,
             int starCount,
-            Boolean starred,
             int viewerCount,
             ImageView mainImage
     ) {
@@ -29,7 +28,6 @@ public class FullRecipeView {
         view.setText(renderedText);
         view.setOwner(UserInfoView.from(recipe.getOwner()));
         view.setStarCount(starCount);
-        view.setIsStarred(starred);
         view.setViewerCount(viewerCount);
         view.setMainImage(mainImage);
         view.setIsPublic(recipe.isPublic());
@@ -47,7 +45,6 @@ public class FullRecipeView {
     private String text;
     private UserInfoView owner;
     private int starCount;
-    private @Nullable Boolean starred;
     private int viewerCount;
     private ImageView mainImage;
     private boolean isPublic;
@@ -138,14 +135,6 @@ public class FullRecipeView {
 
     public void setStarCount(int starCount) {
         this.starCount = starCount;
-    }
-
-    public @Nullable Boolean getIsStarred() {
-        return this.starred;
-    }
-
-    public void setIsStarred(@Nullable Boolean starred) {
-        this.starred = starred;
     }
 
     public int getViewerCount() {

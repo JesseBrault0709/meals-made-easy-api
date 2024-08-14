@@ -12,8 +12,8 @@ public interface RecipeStarRepository extends JpaRepository<RecipeStarEntity, Lo
     @Query("SELECT star FROM RecipeStar star WHERE star.id.recipeId = ?1 AND star.id.ownerUsername = ?2")
     Optional<RecipeStarEntity> findByRecipeIdAndOwnerUsername(Long recipeId, String username);
 
-    @Query("SELECT count(rs) > 0 FROM RecipeStar rs WHERE rs.id.recipeId = ?1 AND rs.id.ownerUsername = ?2")
-    boolean isStarer(long recipeId, String username);
+    @Query("SELECT count(rs) > 0 FROM RecipeStar rs, Recipe r WHERE r.owner.username = ?1 AND r.slug = ?2 AND r.id = rs.id.recipeId AND rs.id.ownerUsername = ?3")
+    boolean isStarer(String ownerUsername, String slug, String viewerUsername);
 
     @Modifying
     @Transactional

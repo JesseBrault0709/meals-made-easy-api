@@ -79,21 +79,23 @@ public class RecipeControllerTests {
                 get("/recipes/{username}/{slug}", recipe.getOwner().getUsername(), recipe.getSlug())
         )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.created").exists()) // TODO: better matching of exact LocalDateTime
-                .andExpect(jsonPath("$.modified").doesNotExist())
-                .andExpect(jsonPath("$.slug").value(recipe.getSlug()))
-                .andExpect(jsonPath("$.title").value("Test Recipe"))
-                .andExpect(jsonPath("$.preparationTime").value(recipe.getPreparationTime()))
-                .andExpect(jsonPath("$.cookingTime").value(recipe.getCookingTime()))
-                .andExpect(jsonPath("$.totalTime").value(recipe.getTotalTime()))
-                .andExpect(jsonPath("$.text").value("<h1>Hello, World!</h1>"))
-                .andExpect(jsonPath("$.owner.id").value(owner.getId()))
-                .andExpect(jsonPath("$.owner.username").value(owner.getUsername()))
-                .andExpect(jsonPath("$.starCount").value(0))
+                .andExpect(jsonPath("$.recipe.id").value(1))
+                .andExpect(jsonPath("$.recipe.created").exists()) // TODO: better matching of exact LocalDateTime
+                .andExpect(jsonPath("$.recipe.modified").doesNotExist())
+                .andExpect(jsonPath("$.recipe.slug").value(recipe.getSlug()))
+                .andExpect(jsonPath("$.recipe.title").value("Test Recipe"))
+                .andExpect(jsonPath("$.recipe.preparationTime").value(recipe.getPreparationTime()))
+                .andExpect(jsonPath("$.recipe.cookingTime").value(recipe.getCookingTime()))
+                .andExpect(jsonPath("$.recipe.totalTime").value(recipe.getTotalTime()))
+                .andExpect(jsonPath("$.recipe.text").value("<h1>Hello, World!</h1>"))
+                .andExpect(jsonPath("$.recipe.owner.id").value(owner.getId()))
+                .andExpect(jsonPath("$.recipe.owner.username").value(owner.getUsername()))
+                .andExpect(jsonPath("$.recipe.starCount").value(0))
+                .andExpect(jsonPath("$.recipe.viewerCount").value(0))
+                .andExpect(jsonPath("$.recipe.isPublic").value(true))
                 .andExpect(jsonPath("$.isStarred").value(nullValue()))
-                .andExpect(jsonPath("$.viewerCount").value(0))
-                .andExpect(jsonPath("$.isPublic").value(true));
+                .andExpect(jsonPath("$.isOwner").value(nullValue()));
+
     }
 
     @Test

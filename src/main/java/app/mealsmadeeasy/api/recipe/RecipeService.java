@@ -5,6 +5,7 @@ import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
 import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
 import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.user.User;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -35,5 +36,11 @@ public interface RecipeService {
     Recipe clearAllViewers(long id, User modifier) throws RecipeException;
 
     void deleteRecipe(long id, User modifier);
+
+    @Contract("_, _, null -> null")
+    @Nullable Boolean isStarer(String username, String slug, @Nullable User viewer);
+
+    @Contract("_, _, null -> null")
+    @Nullable Boolean isOwner(String username, String slug, @Nullable User viewer);
 
 }

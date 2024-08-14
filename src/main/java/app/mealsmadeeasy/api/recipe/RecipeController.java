@@ -43,13 +43,17 @@ public class RecipeController {
     }
 
     @GetMapping("/{username}/{slug}")
-    public ResponseEntity<FullRecipeView> getById(
+    public ResponseEntity<Map<String, Object>> getByUsernameAndSlug(
             @PathVariable String username,
             @PathVariable String slug,
             @AuthenticationPrincipal User viewer
-    )
-            throws RecipeException {
-        return ResponseEntity.ok(this.recipeService.getFullViewByUsernameAndSlug(username, slug, viewer));
+    ) throws RecipeException {
+        final FullRecipeView recipe = this.recipeService.getFullViewByUsernameAndSlug(username, slug, viewer);
+        final Map<String, Object> body = new HashMap<>();
+        body.put("recipe", recipe);
+        body.put("isStarred", this.recipeService.isStarer(username, slug, viewer));
+        body.put("isOwner", this.recipeService.isOwner(username, slug, viewer));
+        return ResponseEntity.ok(body);
     }
 
     @GetMapping

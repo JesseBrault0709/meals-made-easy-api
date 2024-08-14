@@ -57,7 +57,14 @@ public class RecipeStarRepositoryTests {
         starDraft.setId(starId);
         this.recipeStarRepository.save(starDraft);
 
-        assertThat(this.recipeStarRepository.isStarer(recipe.getId(), owner.getUsername()), is(true));
+        assertThat(
+                this.recipeStarRepository.isStarer(
+                        recipe.getOwner().getUsername(),
+                        recipe.getSlug(),
+                        owner.getUsername()
+                ),
+                is(true)
+        );
     }
 
     @Test
@@ -65,7 +72,14 @@ public class RecipeStarRepositoryTests {
     public void returnsFalseIfNotStarer() {
         final UserEntity owner = this.getOwnerUser();
         final RecipeEntity recipe = this.getTestRecipe(owner);
-        assertThat(this.recipeStarRepository.isStarer(recipe.getId(), owner.getUsername()), is(false));
+        assertThat(
+                this.recipeStarRepository.isStarer(
+                        recipe.getOwner().getUsername(),
+                        recipe.getSlug(),
+                        owner.getUsername()
+                ),
+                is(false)
+        );
     }
 
 }

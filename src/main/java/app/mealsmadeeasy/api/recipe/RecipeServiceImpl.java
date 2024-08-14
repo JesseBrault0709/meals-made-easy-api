@@ -130,9 +130,6 @@ public class RecipeServiceImpl implements RecipeService {
                 recipe,
                 this.getRenderedMarkdown(recipe),
                 this.getStarCount(recipe),
-                viewer != null
-                        ? this.recipeStarRepository.isStarer(recipe.getId(), viewer.getUsername())
-                        : null,
                 this.getViewerCount(recipe.getId()),
                 this.getImageView(recipe.getMainImage(), viewer)
         );
@@ -272,6 +269,26 @@ public class RecipeServiceImpl implements RecipeService {
     @PreAuthorize("@recipeSecurity.isOwner(#id, #modifier)")
     public void deleteRecipe(long id, User modifier) {
         this.recipeRepository.deleteById(id);
+    }
+
+    @Override
+    @PreAuthorize("@recipeSecurity.isViewableBy(#username, #slug, #viewer)")
+    @Contract("_, _, null -> null")
+    public @Nullable Boolean isStarer(String username, String slug, @Nullable User viewer) {
+        if (viewer == null) {
+            return null;
+        }
+        return this.recipeStarRepository.isStarer(username, slug, viewer.getUsername());
+    }
+
+    @Override
+    @PreAuthorize("@recipeSecurity.isViewableBy(#username, #slug, #viewer)")
+    @Contract("_, _, null -> null")
+    public @Nullable Boolean isOwner(String username, String slug, @Nullable User viewer) {
+        if (viewer == null) {
+            return null;
+        }
+        return viewer.getUsername().equals(username);
     }
 
 }
