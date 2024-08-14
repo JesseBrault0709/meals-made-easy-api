@@ -16,6 +16,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -74,7 +75,9 @@ public class RecipeControllerTests {
     public void getRecipePageViewByIdPublicRecipeNoPrincipal() throws Exception {
         final User owner = this.createTestUser("owner");
         final Recipe recipe = this.createTestRecipe(owner, true);
-        this.mockMvc.perform(get("/recipes/{username}/{slug}", recipe.getOwner().getUsername(), recipe.getSlug()))
+        this.mockMvc.perform(
+                get("/recipes/{username}/{slug}", recipe.getOwner().getUsername(), recipe.getSlug())
+        )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.created").exists()) // TODO: better matching of exact LocalDateTime
@@ -88,8 +91,37 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.owner.id").value(owner.getId()))
                 .andExpect(jsonPath("$.owner.username").value(owner.getUsername()))
                 .andExpect(jsonPath("$.starCount").value(0))
+                .andExpect(jsonPath("$.isStarred").value(nullValue()))
                 .andExpect(jsonPath("$.viewerCount").value(0))
                 .andExpect(jsonPath("$.isPublic").value(true));
+    }
+
+    @Test
+    @DirtiesContext
+    public void getFullRecipeViewPrincipalIsStarer() throws Exception {
+        final User owner = this.createTestUser("owner");
+        final Recipe recipe = this.createTestRecipe(owner, false);
+        this.recipeStarService.create(recipe.getId(), owner.getUsername());
+        final String accessToken = this.getAccessToken(owner);
+        this.mockMvc.perform(
+                get("/recipes/{username}/{slug}", recipe.getOwner().getUsername(), recipe.getSlug())
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isStarred").value(true));
+    }
+
+    @Test
+    public void getFullRecipeViewPrincipalIsNotStarer() throws Exception {
+        final User owner = this.createTestUser("owner");
+        final Recipe recipe = this.createTestRecipe(owner, false);
+        final String accessToken = this.getAccessToken(owner);
+        this.mockMvc.perform(
+                get("/recipes/{username}/{slug}", recipe.getOwner().getUsername(), recipe.getSlug())
+                        .header("Authorization", "Bearer " + accessToken)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.isStarred").value(false));
     }
 
     @Test

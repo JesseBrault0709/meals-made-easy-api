@@ -4,6 +4,7 @@ import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
 import app.mealsmadeeasy.api.recipe.star.RecipeStarService;
+import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
 import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserEntity;
@@ -23,6 +24,7 @@ import static app.mealsmadeeasy.api.recipe.ContainsRecipeInfoViewsForRecipesMatc
 import static app.mealsmadeeasy.api.recipe.ContainsRecipesMatcher.containsRecipes;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -348,6 +350,46 @@ public class RecipeServiceTests {
         final User notOwner = this.createTestUser("notOwner");
         final Recipe toDelete = this.createTestRecipe(owner);
         assertThrows(AccessDeniedException.class, () -> this.recipeService.deleteRecipe(toDelete.getId(), notOwner));
+    }
+
+    @Test
+    @DirtiesContext
+    public void getFullViewByUsernameAndSlugIncludesStarredFalseWhenViewerNotNullButNotStarer() throws RecipeException {
+        final User owner = this.createTestUser("recipeOwner");
+        final Recipe recipe = this.createTestRecipe(owner);
+        final FullRecipeView view = this.recipeService.getFullViewByUsernameAndSlug(
+                owner.getUsername(),
+                recipe.getSlug(),
+                owner
+        );
+        assertThat(view.getIsStarred(), is(false));
+    }
+
+    @Test
+    @DirtiesContext
+    public void getFullViewByUsernameAndSlugIncludesStarredTrueWhenViewerNotNullAndStarer() throws RecipeException {
+        final User owner = this.createTestUser("recipeOwner");
+        final Recipe recipe = this.createTestRecipe(owner);
+        this.recipeStarService.create(recipe.getId(), owner.getUsername());
+        final FullRecipeView view = this.recipeService.getFullViewByUsernameAndSlug(
+                owner.getUsername(),
+                recipe.getSlug(),
+                owner
+        );
+        assertThat(view.getIsStarred(), is(true));
+    }
+
+    @Test
+    @DirtiesContext
+    public void getFullViewByUsernameIncludesStarredNullWhenViewerNull() throws RecipeException {
+        final User owner = this.createTestUser("recipeOwner");
+        final Recipe recipe = this.createTestRecipe(owner, true);
+        final FullRecipeView view = this.recipeService.getFullViewByUsernameAndSlug(
+                owner.getUsername(),
+                recipe.getSlug(),
+                null
+        );
+        assertThat(view.getIsStarred(), is(nullValue()));
     }
 
 }

@@ -6,6 +6,7 @@ import app.mealsmadeeasy.api.image.S3ImageEntity;
 import app.mealsmadeeasy.api.image.view.ImageView;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
+import app.mealsmadeeasy.api.recipe.star.RecipeStarRepository;
 import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
 import app.mealsmadeeasy.api.recipe.view.RecipeInfoView;
 import app.mealsmadeeasy.api.user.User;
@@ -40,11 +41,16 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     private final RecipeRepository recipeRepository;
+    private final RecipeStarRepository recipeStarRepository;
     private final ImageService imageService;
 
-
-    public RecipeServiceImpl(RecipeRepository recipeRepository, ImageService imageService) {
+    public RecipeServiceImpl(
+            RecipeRepository recipeRepository,
+            RecipeStarRepository recipeStarRepository,
+            ImageService imageService
+    ) {
         this.recipeRepository = recipeRepository;
+        this.recipeStarRepository = recipeStarRepository;
         this.imageService = imageService;
     }
 
@@ -124,6 +130,9 @@ public class RecipeServiceImpl implements RecipeService {
                 recipe,
                 this.getRenderedMarkdown(recipe),
                 this.getStarCount(recipe),
+                viewer != null
+                        ? this.recipeStarRepository.isStarer(recipe.getId(), viewer.getUsername())
+                        : null,
                 this.getViewerCount(recipe.getId()),
                 this.getImageView(recipe.getMainImage(), viewer)
         );
