@@ -125,10 +125,11 @@ public class RecipeServiceImpl implements RecipeService {
         }
     }
 
-    private FullRecipeView getFullView(RecipeEntity recipe, @Nullable User viewer) {
+    private FullRecipeView getFullView(RecipeEntity recipe, boolean includeRawText, @Nullable User viewer) {
         return FullRecipeView.from(
                 recipe,
                 this.getRenderedMarkdown(recipe),
+                includeRawText,
                 this.getStarCount(recipe),
                 this.getViewerCount(recipe.getId()),
                 this.getImageView(recipe.getMainImage(), viewer)
@@ -149,18 +150,23 @@ public class RecipeServiceImpl implements RecipeService {
         final RecipeEntity recipe = this.recipeRepository.findById(id).orElseThrow(() -> new RecipeException(
                 RecipeException.Type.INVALID_ID, "No such Recipe for id: " + id
         ));
-        return this.getFullView(recipe, viewer);
+        return this.getFullView(recipe, false, viewer);
     }
 
     @Override
     @PreAuthorize("@recipeSecurity.isViewableBy(#username, #slug, #viewer)")
-    public FullRecipeView getFullViewByUsernameAndSlug(String username, String slug, @Nullable User viewer) throws RecipeException {
+    public FullRecipeView getFullViewByUsernameAndSlug(
+            String username,
+            String slug,
+            boolean includeRawText,
+            @Nullable User viewer
+    ) throws RecipeException {
         final RecipeEntity recipe = this.recipeRepository.findByOwnerUsernameAndSlug(username, slug)
                 .orElseThrow(() -> new RecipeException(
                         RecipeException.Type.INVALID_USERNAME_OR_SLUG,
                         "No such Recipe for username " + username + " and slug: " + slug
                 ));
-        return this.getFullView(recipe, viewer);
+        return this.getFullView(recipe, includeRawText, viewer);
     }
 
     @Override

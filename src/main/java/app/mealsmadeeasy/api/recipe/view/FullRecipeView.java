@@ -3,6 +3,8 @@ package app.mealsmadeeasy.api.recipe.view;
 import app.mealsmadeeasy.api.image.view.ImageView;
 import app.mealsmadeeasy.api.recipe.Recipe;
 import app.mealsmadeeasy.api.user.view.UserInfoView;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.LocalDateTime;
@@ -12,6 +14,7 @@ public class FullRecipeView {
     public static FullRecipeView from(
             Recipe recipe,
             String renderedText,
+            boolean includeRawText,
             int starCount,
             int viewerCount,
             ImageView mainImage
@@ -26,6 +29,9 @@ public class FullRecipeView {
         view.setCookingTime(recipe.getCookingTime());
         view.setTotalTime(recipe.getTotalTime());
         view.setText(renderedText);
+        if (includeRawText) {
+            view.setRawText(recipe.getRawText());
+        }
         view.setOwner(UserInfoView.from(recipe.getOwner()));
         view.setStarCount(starCount);
         view.setViewerCount(viewerCount);
@@ -43,6 +49,7 @@ public class FullRecipeView {
     private @Nullable Integer cookingTime;
     private @Nullable Integer totalTime;
     private String text;
+    private @Nullable String rawText;
     private UserInfoView owner;
     private int starCount;
     private int viewerCount;
@@ -119,6 +126,15 @@ public class FullRecipeView {
 
     public void setText(String text) {
         this.text = text;
+    }
+
+    @JsonInclude(Include.NON_NULL)
+    public @Nullable String getRawText() {
+        return this.rawText;
+    }
+
+    public void setRawText(@Nullable String rawText) {
+        this.rawText = rawText;
     }
 
     public UserInfoView getOwner() {

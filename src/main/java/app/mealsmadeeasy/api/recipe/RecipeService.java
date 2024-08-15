@@ -21,7 +21,12 @@ public interface RecipeService {
     Recipe getByUsernameAndSlug(String username, String slug, @Nullable User viewer) throws RecipeException;
 
     FullRecipeView getFullViewById(long id, @Nullable User viewer) throws RecipeException;
-    FullRecipeView getFullViewByUsernameAndSlug(String username, String slug, @Nullable User viewer) throws RecipeException;
+    FullRecipeView getFullViewByUsernameAndSlug(
+            String username,
+            String slug,
+            boolean includeRawText,
+            @Nullable User viewer
+    ) throws RecipeException;
 
     Slice<RecipeInfoView> getInfoViewsViewableBy(Pageable pageable, @Nullable User viewer);
     List<Recipe> getByMinimumStars(long minimumStars, @Nullable User viewer);

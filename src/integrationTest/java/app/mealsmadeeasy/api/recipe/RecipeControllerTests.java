@@ -88,6 +88,7 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.recipe.cookingTime").value(recipe.getCookingTime()))
                 .andExpect(jsonPath("$.recipe.totalTime").value(recipe.getTotalTime()))
                 .andExpect(jsonPath("$.recipe.text").value("<h1>Hello, World!</h1>"))
+                .andExpect(jsonPath("$.recipe.rawText").doesNotExist())
                 .andExpect(jsonPath("$.recipe.owner.id").value(owner.getId()))
                 .andExpect(jsonPath("$.recipe.owner.username").value(owner.getUsername()))
                 .andExpect(jsonPath("$.recipe.starCount").value(0))
@@ -95,7 +96,22 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.recipe.isPublic").value(true))
                 .andExpect(jsonPath("$.isStarred").value(nullValue()))
                 .andExpect(jsonPath("$.isOwner").value(nullValue()));
+    }
 
+    @Test
+    @DirtiesContext
+    public void getFullRecipeViewIncludeRawText() throws Exception {
+        final User owner = this.createTestUser("owner");
+        final Recipe recipe = this.createTestRecipe(owner, true);
+        this.mockMvc.perform(
+                get(
+                        "/recipes/{username}/{slug}?includeRawText=true",
+                        recipe.getOwner().getUsername(),
+                        recipe.getSlug()
+                )
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recipe.rawText").value(recipe.getRawText()));
     }
 
     @Test
@@ -114,6 +130,7 @@ public class RecipeControllerTests {
     }
 
     @Test
+    @DirtiesContext
     public void getFullRecipeViewPrincipalIsNotStarer() throws Exception {
         final User owner = this.createTestUser("owner");
         final Recipe recipe = this.createTestRecipe(owner, false);
