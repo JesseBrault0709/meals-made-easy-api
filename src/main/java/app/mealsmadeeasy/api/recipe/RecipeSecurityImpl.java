@@ -30,6 +30,17 @@ public class RecipeSecurityImpl implements RecipeSecurity {
     }
 
     @Override
+    public boolean isOwner(String username, String slug, @Nullable User user) throws RecipeException {
+        final Recipe recipe = this.recipeRepository.findByOwnerUsernameAndSlug(username, slug).orElseThrow(
+                () -> new RecipeException(
+                        RecipeException.Type.INVALID_USERNAME_OR_SLUG,
+                        "No such Recipe for username " + username + " and slug " + slug
+                )
+        );
+        return this.isOwner(recipe, user);
+    }
+
+    @Override
     public boolean isViewableBy(Recipe recipe, @Nullable User user) throws RecipeException {
         if (recipe.isPublic()) {
             // public recipe

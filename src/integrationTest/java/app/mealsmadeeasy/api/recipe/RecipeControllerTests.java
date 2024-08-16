@@ -4,14 +4,18 @@ import app.mealsmadeeasy.api.auth.AuthService;
 import app.mealsmadeeasy.api.auth.LoginDetails;
 import app.mealsmadeeasy.api.auth.LoginException;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
+import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
 import app.mealsmadeeasy.api.recipe.star.RecipeStarService;
 import app.mealsmadeeasy.api.user.User;
 import app.mealsmadeeasy.api.user.UserCreateException;
 import app.mealsmadeeasy.api.user.UserService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -39,6 +43,9 @@ public class RecipeControllerTests {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private User createTestUser(String username) {
         try {
@@ -185,6 +192,65 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.slice.size").value(20))
                 .andExpect(jsonPath("$.content").isArray())
                 .andExpect(jsonPath("$.content", hasSize(3)));
+    }
+
+    private String getUpdateBody() throws JsonProcessingException {
+        final RecipeUpdateSpec spec = new RecipeUpdateSpec();
+        spec.setTitle("Updated Test Recipe");
+        spec.setPreparationTime(15);
+        spec.setCookingTime(30);
+        spec.setTotalTime(45);
+        spec.setRawText("# Hello, Updated World!");
+        spec.setIsPublic(true);
+        return this.objectMapper.writeValueAsString(spec);
+    }
+
+    @Test
+    @DirtiesContext
+    public void updateRecipe() throws Exception {
+        final User owner = this.createTestUser("owner");
+        final Recipe recipe = this.createTestRecipe(owner, false);
+        final String accessToken = this.getAccessToken(owner);
+        final String body = this.getUpdateBody();
+        this.mockMvc.perform(
+                post("/recipes/{username}/{slug}", owner.getUsername(), recipe.getSlug())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recipe.id").value(recipe.getId()))
+                .andExpect(jsonPath("$.recipe.title").value("Updated Test Recipe"))
+                .andExpect(jsonPath("$.recipe.preparationTime").value(15))
+                .andExpect(jsonPath("$.recipe.cookingTime").value(30))
+                .andExpect(jsonPath("$.recipe.totalTime").value(45))
+                .andExpect(jsonPath("$.recipe.text").value("<h1>Hello, Updated World!</h1>"))
+                .andExpect(jsonPath("$.recipe.rawText").doesNotExist())
+                .andExpect(jsonPath("$.recipe.owner.id").value(owner.getId()))
+                .andExpect(jsonPath("$.recipe.owner.username").value(owner.getUsername()))
+                .andExpect(jsonPath("$.recipe.starCount").value(0))
+                .andExpect(jsonPath("$.recipe.viewerCount").value(0))
+                .andExpect(jsonPath("$.recipe.isPublic").value(true))
+                .andExpect(jsonPath("$.isStarred").value(false))
+                .andExpect(jsonPath("$.isOwner").value(true));
+    }
+
+    @Test
+    @DirtiesContext
+    public void updateRecipeIncludeRawText() throws Exception {
+        final User owner = this.createTestUser("owner");
+        final Recipe recipe = this.createTestRecipe(owner, false);
+        final String accessToken = this.getAccessToken(owner);
+        final String body = this.getUpdateBody();
+        this.mockMvc.perform(
+                post("/recipes/{username}/{slug}", owner.getUsername(), recipe.getSlug())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .param("includeRawText", "true")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recipe.rawText").value("# Hello, Updated World!"));
     }
 
     @Test

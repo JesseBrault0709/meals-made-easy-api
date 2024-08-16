@@ -1,5 +1,6 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.image.ImageException;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
@@ -162,13 +163,18 @@ public class RecipeServiceTests {
 
     @Test
     @DirtiesContext
-    public void getByIdWithStarsOkayWhenPublicRecipeWithViewer() throws RecipeException {
+    public void getByIdWithStarsOkayWhenPublicRecipeWithViewer() throws RecipeException, ImageException {
         final User owner = this.createTestUser("recipeOwner");
         final User viewer = this.createTestUser("viewer");
         final Recipe notYetPublicRecipe = this.createTestRecipe(owner);
-        final RecipeUpdateSpec updateSpec = new RecipeUpdateSpec();
-        updateSpec.setPublic(true);
-        final Recipe publicRecipe = this.recipeService.update(notYetPublicRecipe.getId(), updateSpec, owner);
+        final RecipeUpdateSpec updateSpec = new RecipeUpdateSpec(notYetPublicRecipe);
+        updateSpec.setIsPublic(true);
+        final Recipe publicRecipe = this.recipeService.update(
+                notYetPublicRecipe.getOwner().getUsername(),
+                notYetPublicRecipe.getSlug(),
+                updateSpec,
+                owner
+        );
         assertDoesNotThrow(() -> this.recipeService.getByIdWithStars(publicRecipe.getId(), viewer));
     }
 
@@ -304,7 +310,7 @@ public class RecipeServiceTests {
 
     @Test
     @DirtiesContext
-    public void updateRawText() throws RecipeException {
+    public void updateRawText() throws RecipeException, ImageException {
         final User owner = this.createTestUser("recipeOwner");
         final RecipeCreateSpec createSpec = new RecipeCreateSpec();
         createSpec.setSlug("my-recipe");
@@ -312,9 +318,14 @@ public class RecipeServiceTests {
         createSpec.setRawText("# A Heading");
         Recipe recipe = this.recipeService.create(owner, createSpec);
         final String newRawText = "# A Heading\n## A Subheading";
-        final RecipeUpdateSpec updateSpec = new RecipeUpdateSpec();
+        final RecipeUpdateSpec updateSpec = new RecipeUpdateSpec(recipe);
         updateSpec.setRawText(newRawText);
-        recipe = this.recipeService.update(recipe.getId(), updateSpec, owner);
+        recipe = this.recipeService.update(
+                recipe.getOwner().getUsername(),
+                recipe.getSlug(),
+                updateSpec,
+                owner
+        );
         assertThat(recipe.getRawText(), is(newRawText));
     }
 
@@ -328,7 +339,12 @@ public class RecipeServiceTests {
         updateSpec.setRawText("should fail");
         assertThrows(
                 AccessDeniedException.class,
-                () -> this.recipeService.update(recipe.getId(), updateSpec, notOwner)
+                () -> this.recipeService.update(
+                        recipe.getOwner().getUsername(),
+                        recipe.getSlug(),
+                        updateSpec,
+                        notOwner
+                )
         );
     }
 

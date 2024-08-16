@@ -17,6 +17,7 @@ public interface ImageService {
 
     Image getById(long id, @Nullable User viewer) throws ImageException;
     Image getByOwnerAndFilename(User owner, String filename, User viewer) throws ImageException;
+    Image getByUsernameAndFilename(String username, String filename, User viewer) throws ImageException;
 
     InputStream getImageContent(Image image, @Nullable User viewer) throws IOException;
     List<Image> getImagesOwnedBy(User user);

@@ -1,25 +1,65 @@
 package app.mealsmadeeasy.api.recipe.spec;
 
 import app.mealsmadeeasy.api.image.Image;
+import app.mealsmadeeasy.api.recipe.Recipe;
 import org.jetbrains.annotations.Nullable;
 
+// For now, we cannot change slug after creation.
+// In the future, we may be able to have redirects from
+// old slugs to new slugs.
 public class RecipeUpdateSpec {
 
-    private @Nullable String slug;
-    private @Nullable String title;
+    public static class MainImageUpdateSpec {
+
+        private String username;
+        private String filename;
+
+        public String getUsername() {
+            return this.username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getFilename() {
+            return this.filename;
+        }
+
+        public void setFilename(String filename) {
+            this.filename = filename;
+        }
+
+    }
+
+    private String title;
     private @Nullable Integer preparationTime;
     private @Nullable Integer cookingTime;
     private @Nullable Integer totalTime;
-    private @Nullable String rawText;
-    private @Nullable Boolean isPublic;
-    private @Nullable Image mainImage;
+    private String rawText;
+    private boolean isPublic;
+    private @Nullable MainImageUpdateSpec mainImageUpdateSpec;
 
-    public @Nullable String getSlug() {
-        return this.slug;
-    }
+    public RecipeUpdateSpec() {}
 
-    public void setSlug(@Nullable String slug) {
-        this.slug = slug;
+    /**
+     * Convenience constructor for testing purposes.
+     *
+     * @param recipe the Recipe to copy from
+     */
+    public RecipeUpdateSpec(Recipe recipe) {
+        this.title = recipe.getTitle();
+        this.preparationTime = recipe.getPreparationTime();
+        this.cookingTime = recipe.getCookingTime();
+        this.totalTime = recipe.getTotalTime();
+        this.rawText = recipe.getRawText();
+        this.isPublic = recipe.isPublic();
+        final @Nullable Image mainImage = recipe.getMainImage();
+        if (mainImage != null) {
+            this.mainImageUpdateSpec = new MainImageUpdateSpec();
+            this.mainImageUpdateSpec.setUsername(mainImage.getOwner().getUsername());
+            this.mainImageUpdateSpec.setFilename(mainImage.getUserFilename());
+        }
     }
 
     public @Nullable String getTitle() {
@@ -62,20 +102,20 @@ public class RecipeUpdateSpec {
         this.rawText = rawText;
     }
 
-    public @Nullable Boolean getPublic() {
+    public boolean getIsPublic() {
         return this.isPublic;
     }
 
-    public void setPublic(@Nullable Boolean isPublic) {
+    public void setIsPublic(boolean isPublic) {
         this.isPublic = isPublic;
     }
 
-    public @Nullable Image getMainImage() {
-        return this.mainImage;
+    public @Nullable MainImageUpdateSpec getMainImageUpdateSpec() {
+        return this.mainImageUpdateSpec;
     }
 
-    public void setMainImage(@Nullable Image mainImage) {
-        this.mainImage = mainImage;
+    public void setMainImageUpdateSpec(@Nullable MainImageUpdateSpec mainImageUpdateSpec) {
+        this.mainImageUpdateSpec = mainImageUpdateSpec;
     }
 
 }

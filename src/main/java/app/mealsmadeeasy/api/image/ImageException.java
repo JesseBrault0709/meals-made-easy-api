@@ -3,7 +3,10 @@ package app.mealsmadeeasy.api.image;
 public class ImageException extends Exception {
 
     public enum Type {
-        INVALID_ID, IMAGE_NOT_FOUND, UNKNOWN_MIME_TYPE
+        INVALID_ID,
+        INVALID_USERNAME_OR_FILENAME,
+        IMAGE_NOT_FOUND,
+        UNKNOWN_MIME_TYPE
     }
 
     private final Type type;

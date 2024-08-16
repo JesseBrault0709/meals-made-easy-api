@@ -1,6 +1,7 @@
 package app.mealsmadeeasy.api.recipe;
 
 import app.mealsmadeeasy.api.image.Image;
+import app.mealsmadeeasy.api.image.ImageException;
 import app.mealsmadeeasy.api.image.ImageService;
 import app.mealsmadeeasy.api.image.S3ImageEntity;
 import app.mealsmadeeasy.api.image.view.ImageView;
@@ -199,46 +200,37 @@ public class RecipeServiceImpl implements RecipeService {
     }
 
     @Override
-    @PreAuthorize("@recipeSecurity.isOwner(#id, #modifier)")
-    public Recipe update(long id, RecipeUpdateSpec spec, User modifier) throws RecipeException {
-        final RecipeEntity entity = this.findRecipeEntity(id);
-        boolean didModify = false;
-        if (spec.getSlug() != null) {
-            entity.setSlug(spec.getSlug());
-            didModify = true;
+    @PreAuthorize("@recipeSecurity.isOwner(#username, #slug, #modifier)")
+    public Recipe update(String username, String slug, RecipeUpdateSpec spec, User modifier)
+            throws RecipeException, ImageException {
+        final RecipeEntity recipe = this.recipeRepository.findByOwnerUsernameAndSlug(username, slug).orElseThrow(() ->
+                new RecipeException(
+                        RecipeException.Type.INVALID_USERNAME_OR_SLUG,
+                        "No such Recipe for username " + username + " and slug: " + slug
+                )
+        );
+
+        recipe.setTitle(spec.getTitle());
+        recipe.setPreparationTime(spec.getPreparationTime());
+        recipe.setCookingTime(spec.getCookingTime());
+        recipe.setTotalTime(spec.getTotalTime());
+        recipe.setRawText(spec.getRawText());
+        recipe.setPublic(spec.getIsPublic());
+
+        final S3ImageEntity mainImage;
+        if (spec.getMainImageUpdateSpec() == null) {
+            mainImage = null;
+        } else {
+            mainImage = (S3ImageEntity) this.imageService.getByUsernameAndFilename(
+                    spec.getMainImageUpdateSpec().getUsername(),
+                    spec.getMainImageUpdateSpec().getFilename(),
+                    modifier
+            );
         }
-        if (spec.getTitle() != null) {
-            entity.setTitle(spec.getTitle());
-            didModify = true;
-        }
-        if (spec.getPreparationTime() != null) {
-            entity.setPreparationTime(spec.getPreparationTime());
-            didModify = true;
-        }
-        if (spec.getCookingTime() != null) {
-            entity.setCookingTime(spec.getCookingTime());
-            didModify = true;
-        }
-        if (spec.getTotalTime() != null) {
-            entity.setTotalTime(spec.getTotalTime());
-            didModify = true;
-        }
-        if (spec.getRawText() != null) {
-            entity.setRawText(spec.getRawText());
-            didModify = true;
-        }
-        if (spec.getPublic() != null) {
-            entity.setPublic(spec.getPublic());
-            didModify = true;
-        }
-        if (spec.getMainImage() != null) {
-            entity.setMainImage((S3ImageEntity) spec.getMainImage());
-            didModify = true;
-        }
-        if (didModify) {
-            entity.setModified(LocalDateTime.now());
-        }
-        return this.recipeRepository.save(entity);
+        recipe.setMainImage(mainImage);
+
+        recipe.setModified(LocalDateTime.now());
+        return this.recipeRepository.save(recipe);
     }
 
     @Override
@@ -275,6 +267,16 @@ public class RecipeServiceImpl implements RecipeService {
     @PreAuthorize("@recipeSecurity.isOwner(#id, #modifier)")
     public void deleteRecipe(long id, User modifier) {
         this.recipeRepository.deleteById(id);
+    }
+
+    @Override
+    public FullRecipeView toFullRecipeView(Recipe recipe, boolean includeRawText, @Nullable User viewer) {
+        return this.getFullView((RecipeEntity) recipe, includeRawText, viewer);
+    }
+
+    @Override
+    public RecipeInfoView toRecipeInfoView(Recipe recipe, @Nullable User viewer) {
+        return this.getInfoView((RecipeEntity) recipe, viewer);
     }
 
     @Override

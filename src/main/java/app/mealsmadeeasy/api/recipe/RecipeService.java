@@ -1,5 +1,6 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.image.ImageException;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
 import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
@@ -34,13 +35,17 @@ public interface RecipeService {
     List<Recipe> getRecipesViewableBy(User viewer);
     List<Recipe> getRecipesOwnedBy(User owner);
 
-    Recipe update(long id, RecipeUpdateSpec spec, User modifier) throws RecipeException;
+    Recipe update(String username, String slug, RecipeUpdateSpec spec, User modifier)
+            throws RecipeException, ImageException;
 
     Recipe addViewer(long id, User modifier, User viewer) throws RecipeException;
     Recipe removeViewer(long id, User modifier, User viewer) throws RecipeException;
     Recipe clearAllViewers(long id, User modifier) throws RecipeException;
 
     void deleteRecipe(long id, User modifier);
+
+    FullRecipeView toFullRecipeView(Recipe recipe, boolean includeRawText, @Nullable User viewer);
+    RecipeInfoView toRecipeInfoView(Recipe recipe, @Nullable User viewer);
 
     @Contract("_, _, null -> null")
     @Nullable Boolean isStarer(String username, String slug, @Nullable User viewer);

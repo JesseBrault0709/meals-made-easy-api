@@ -140,6 +140,17 @@ public class S3ImageService implements ImageService {
     }
 
     @Override
+    @PostAuthorize("@imageSecurity.isViewableBy(returnObject, #viewer)")
+    public Image getByUsernameAndFilename(String username, String filename, User viewer) throws ImageException {
+        return this.imageRepository.findByOwnerUsernameAndFilename(username, filename).orElseThrow(
+                () -> new ImageException(
+                        ImageException.Type.INVALID_USERNAME_OR_FILENAME,
+                        "No such Image for username " + username + " and filename " + filename
+                )
+        );
+    }
+
+    @Override
     @PreAuthorize("@imageSecurity.isViewableBy(#image, #viewer)")
     public InputStream getImageContent(Image image, User viewer) throws IOException {
         return this.s3Manager.load(this.imageBucketName, ((S3ImageEntity) image).getObjectName());

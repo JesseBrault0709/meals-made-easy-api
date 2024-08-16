@@ -17,4 +17,7 @@ public interface S3ImageRepository extends JpaRepository<S3ImageEntity, Long> {
     List<S3ImageEntity> findAllByOwner(UserEntity owner);
     Optional<S3ImageEntity> findByOwnerAndUserFilename(UserEntity owner, String filename);
 
+    @Query("SELECT image from Image image WHERE image.owner.username = ?1 AND image.userFilename = ?2")
+    Optional<S3ImageEntity> findByOwnerUsernameAndFilename(String username, String filename);
+
 }

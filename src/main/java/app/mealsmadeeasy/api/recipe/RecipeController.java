@@ -1,5 +1,7 @@
 package app.mealsmadeeasy.api.recipe;
 
+import app.mealsmadeeasy.api.image.ImageException;
+import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
 import app.mealsmadeeasy.api.recipe.star.RecipeStar;
 import app.mealsmadeeasy.api.recipe.star.RecipeStarService;
 import app.mealsmadeeasy.api.recipe.view.FullRecipeView;
@@ -42,6 +44,14 @@ public class RecipeController {
         ));
     }
 
+    private Map<String, Object> getFullViewWrapper(String username, String slug, FullRecipeView view, @Nullable User viewer) {
+        Map<String, Object> wrapper = new HashMap<>();
+        wrapper.put("recipe", view);
+        wrapper.put("isStarred", this.recipeService.isStarer(username, slug, viewer));
+        wrapper.put("isOwner", this.recipeService.isOwner(username, slug, viewer));
+        return wrapper;
+    }
+
     @GetMapping("/{username}/{slug}")
     public ResponseEntity<Map<String, Object>> getByUsernameAndSlug(
             @PathVariable String username,
@@ -55,11 +65,20 @@ public class RecipeController {
                 includeRawText,
                 viewer
         );
-        final Map<String, Object> body = new HashMap<>();
-        body.put("recipe", view);
-        body.put("isStarred", this.recipeService.isStarer(username, slug, viewer));
-        body.put("isOwner", this.recipeService.isOwner(username, slug, viewer));
-        return ResponseEntity.ok(body);
+        return ResponseEntity.ok(this.getFullViewWrapper(username, slug, view, viewer));
+    }
+
+    @PostMapping("/{username}/{slug}")
+    public ResponseEntity<Map<String, Object>> updateByUsernameAndSlug(
+            @PathVariable String username,
+            @PathVariable String slug,
+            @RequestParam(defaultValue = "false") boolean includeRawText,
+            @RequestBody RecipeUpdateSpec updateSpec,
+            @AuthenticationPrincipal User principal
+    ) throws ImageException, RecipeException {
+        final Recipe updated = this.recipeService.update(username, slug, updateSpec, principal);
+        final FullRecipeView view = this.recipeService.toFullRecipeView(updated, includeRawText, principal);
+        return ResponseEntity.ok(this.getFullViewWrapper(username, slug, view, principal));
     }
 
     @GetMapping
