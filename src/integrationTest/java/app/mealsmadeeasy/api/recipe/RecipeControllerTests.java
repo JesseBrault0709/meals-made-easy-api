@@ -3,6 +3,10 @@ package app.mealsmadeeasy.api.recipe;
 import app.mealsmadeeasy.api.auth.AuthService;
 import app.mealsmadeeasy.api.auth.LoginDetails;
 import app.mealsmadeeasy.api.auth.LoginException;
+import app.mealsmadeeasy.api.image.Image;
+import app.mealsmadeeasy.api.image.ImageService;
+import app.mealsmadeeasy.api.image.S3ImageServiceTests;
+import app.mealsmadeeasy.api.image.spec.ImageCreateInfoSpec;
 import app.mealsmadeeasy.api.recipe.spec.RecipeCreateSpec;
 import app.mealsmadeeasy.api.recipe.spec.RecipeUpdateSpec;
 import app.mealsmadeeasy.api.recipe.star.RecipeStarService;
@@ -17,7 +21,15 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.testcontainers.containers.MinIOContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+
+import java.io.InputStream;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.nullValue;
@@ -25,9 +37,26 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Testcontainers
 @SpringBootTest
 @AutoConfigureMockMvc
 public class RecipeControllerTests {
+
+    @Container
+    private static final MinIOContainer container = new MinIOContainer(
+            DockerImageName.parse("minio/minio:latest")
+    );
+
+    @DynamicPropertySource
+    public static void minioProperties(DynamicPropertyRegistry registry) {
+        registry.add("app.mealsmadeeasy.api.minio.endpoint", container::getS3URL);
+        registry.add("app.mealsmadeeasy.api.minio.accessKey", container::getUserName);
+        registry.add("app.mealsmadeeasy.api.minio.secretKey", container::getPassword);
+    }
+
+    private static InputStream getHal9000() {
+        return S3ImageServiceTests.class.getClassLoader().getResourceAsStream("HAL9000.svg");
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -43,6 +72,9 @@ public class RecipeControllerTests {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private ImageService imageService;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -75,6 +107,20 @@ public class RecipeControllerTests {
         return this.authService.login(user.getUsername(), "test")
                 .getAccessToken()
                 .getToken();
+    }
+
+    private Image createHal9000(User owner) {
+        try (final InputStream hal9000 = getHal9000()) {
+            return this.imageService.create(
+                    owner,
+                    "HAL9000.svg",
+                    hal9000,
+                    27881L,
+                    new ImageCreateInfoSpec()
+            );
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Test
@@ -251,6 +297,41 @@ public class RecipeControllerTests {
         )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.recipe.rawText").value("# Hello, Updated World!"));
+    }
+
+    @Test
+    @DirtiesContext
+    public void updateRecipeReturnsViewWithMainImage() throws Exception {
+        final User owner = this.createTestUser("owner");
+
+        final Image hal9000 = this.createHal9000(owner);
+
+        final RecipeCreateSpec createSpec = new RecipeCreateSpec();
+        createSpec.setTitle("Test Recipe");
+        createSpec.setSlug("test-recipe");
+        createSpec.setPublic(false);
+        createSpec.setRawText("# Hello, World!");
+        createSpec.setMainImage(hal9000);
+        Recipe recipe = this.recipeService.create(owner, createSpec);
+
+        final RecipeUpdateSpec updateSpec = new RecipeUpdateSpec();
+        updateSpec.setTitle("Updated Test Recipe");
+        updateSpec.setRawText("# Hello, Updated World!");
+        final RecipeUpdateSpec.MainImageUpdateSpec mainImageUpdateSpec = new RecipeUpdateSpec.MainImageUpdateSpec();
+        mainImageUpdateSpec.setUsername(hal9000.getOwner().getUsername());
+        mainImageUpdateSpec.setFilename(hal9000.getUserFilename());
+        updateSpec.setMainImageUpdateSpec(mainImageUpdateSpec);
+        final String body = this.objectMapper.writeValueAsString(updateSpec);
+
+        final String accessToken = this.getAccessToken(owner);
+        this.mockMvc.perform(
+                post("/recipes/{username}/{slug}", owner.getUsername(), recipe.getSlug())
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body)
+        )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.recipe.mainImage").isMap());
     }
 
     @Test
