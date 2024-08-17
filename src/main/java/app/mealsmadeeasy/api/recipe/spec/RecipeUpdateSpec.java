@@ -38,7 +38,7 @@ public class RecipeUpdateSpec {
     private @Nullable Integer totalTime;
     private String rawText;
     private boolean isPublic;
-    private @Nullable MainImageUpdateSpec mainImageUpdateSpec;
+    private @Nullable MainImageUpdateSpec mainImage;
 
     public RecipeUpdateSpec() {}
 
@@ -56,9 +56,9 @@ public class RecipeUpdateSpec {
         this.isPublic = recipe.isPublic();
         final @Nullable Image mainImage = recipe.getMainImage();
         if (mainImage != null) {
-            this.mainImageUpdateSpec = new MainImageUpdateSpec();
-            this.mainImageUpdateSpec.setUsername(mainImage.getOwner().getUsername());
-            this.mainImageUpdateSpec.setFilename(mainImage.getUserFilename());
+            this.mainImage = new MainImageUpdateSpec();
+            this.mainImage.setUsername(mainImage.getOwner().getUsername());
+            this.mainImage.setFilename(mainImage.getUserFilename());
         }
     }
 
@@ -110,12 +110,12 @@ public class RecipeUpdateSpec {
         this.isPublic = isPublic;
     }
 
-    public @Nullable MainImageUpdateSpec getMainImageUpdateSpec() {
-        return this.mainImageUpdateSpec;
+    public @Nullable MainImageUpdateSpec getMainImage() {
+        return this.mainImage;
     }
 
-    public void setMainImageUpdateSpec(@Nullable MainImageUpdateSpec mainImageUpdateSpec) {
-        this.mainImageUpdateSpec = mainImageUpdateSpec;
+    public void setMainImage(@Nullable MainImageUpdateSpec mainImage) {
+        this.mainImage = mainImage;
     }
 
 }

@@ -219,12 +219,12 @@ public class RecipeServiceImpl implements RecipeService {
         recipe.setPublic(spec.getIsPublic());
 
         final S3ImageEntity mainImage;
-        if (spec.getMainImageUpdateSpec() == null) {
+        if (spec.getMainImage() == null) {
             mainImage = null;
         } else {
             mainImage = (S3ImageEntity) this.imageService.getByUsernameAndFilename(
-                    spec.getMainImageUpdateSpec().getUsername(),
-                    spec.getMainImageUpdateSpec().getFilename(),
+                    spec.getMainImage().getUsername(),
+                    spec.getMainImage().getFilename(),
                     modifier
             );
         }

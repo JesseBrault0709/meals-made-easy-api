@@ -323,7 +323,7 @@ public class RecipeControllerTests {
         final RecipeUpdateSpec.MainImageUpdateSpec mainImageUpdateSpec = new RecipeUpdateSpec.MainImageUpdateSpec();
         mainImageUpdateSpec.setUsername(hal9000.getOwner().getUsername());
         mainImageUpdateSpec.setFilename(hal9000.getUserFilename());
-        updateSpec.setMainImageUpdateSpec(mainImageUpdateSpec);
+        updateSpec.setMainImage(mainImageUpdateSpec);
         final String body = this.objectMapper.writeValueAsString(updateSpec);
 
         final String accessToken = this.getAccessToken(owner);
