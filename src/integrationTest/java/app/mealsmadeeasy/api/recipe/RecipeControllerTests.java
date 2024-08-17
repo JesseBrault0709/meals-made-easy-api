@@ -147,6 +147,7 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.recipe.starCount").value(0))
                 .andExpect(jsonPath("$.recipe.viewerCount").value(0))
                 .andExpect(jsonPath("$.recipe.isPublic").value(true))
+                .andExpect(jsonPath("$.recipe.mainImage").value(nullValue()))
                 .andExpect(jsonPath("$.isStarred").value(nullValue()))
                 .andExpect(jsonPath("$.isOwner").value(nullValue()));
     }
@@ -218,7 +219,8 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.content[0].owner.id").value(owner.getId()))
                 .andExpect(jsonPath("$.content[0].owner.username").value(owner.getUsername()))
                 .andExpect(jsonPath("$.content[0].isPublic").value(true))
-                .andExpect(jsonPath("$.content[0].starCount").value(0));
+                .andExpect(jsonPath("$.content[0].starCount").value(0))
+                .andExpect(jsonPath("$.content[0].mainImage").value(nullValue()));
     }
 
     @Test
@@ -277,6 +279,7 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.recipe.starCount").value(0))
                 .andExpect(jsonPath("$.recipe.viewerCount").value(0))
                 .andExpect(jsonPath("$.recipe.isPublic").value(true))
+                .andExpect(jsonPath("$.recipe.mainImage").value(nullValue()))
                 .andExpect(jsonPath("$.isStarred").value(false))
                 .andExpect(jsonPath("$.isOwner").value(true));
     }

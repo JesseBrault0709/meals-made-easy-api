@@ -17,7 +17,7 @@ public class FullRecipeView {
             boolean includeRawText,
             int starCount,
             int viewerCount,
-            ImageView mainImage
+            @Nullable ImageView mainImage
     ) {
         final FullRecipeView view = new FullRecipeView();
         view.setId(recipe.getId());
@@ -53,7 +53,7 @@ public class FullRecipeView {
     private UserInfoView owner;
     private int starCount;
     private int viewerCount;
-    private ImageView mainImage;
+    private @Nullable ImageView mainImage;
     private boolean isPublic;
 
     public long getId() {
@@ -161,11 +161,11 @@ public class FullRecipeView {
         this.viewerCount = viewerCount;
     }
 
-    public ImageView getMainImage() {
+    public @Nullable ImageView getMainImage() {
         return this.mainImage;
     }
 
-    public void setMainImage(ImageView mainImage) {
+    public void setMainImage(@Nullable ImageView mainImage) {
         this.mainImage = mainImage;
     }
 

@@ -224,11 +224,11 @@ public final class RecipeEntity implements Recipe {
     }
 
     @Override
-    public S3ImageEntity getMainImage() {
+    public @Nullable S3ImageEntity getMainImage() {
         return this.mainImage;
     }
 
-    public void setMainImage(S3ImageEntity image) {
+    public void setMainImage(@Nullable S3ImageEntity image) {
         this.mainImage = image;
     }
 

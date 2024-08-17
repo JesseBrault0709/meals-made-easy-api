@@ -24,5 +24,5 @@ public interface Recipe {
     boolean isPublic();
     Set<User> getViewers();
     Set<RecipeComment> getComments();
-    Image getMainImage();
+    @Nullable Image getMainImage();
 }
