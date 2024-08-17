@@ -153,11 +153,11 @@ public final class RecipeEntity implements Recipe {
         this.rawText = rawText;
     }
 
-    public String getCachedRenderedText() {
+    public @Nullable String getCachedRenderedText() {
         return this.cachedRenderedText;
     }
 
-    public void setCachedRenderedText(String cachedRenderedText) {
+    public void setCachedRenderedText(@Nullable String cachedRenderedText) {
         this.cachedRenderedText = cachedRenderedText;
     }
 

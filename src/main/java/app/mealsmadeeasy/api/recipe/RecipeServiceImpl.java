@@ -215,6 +215,7 @@ public class RecipeServiceImpl implements RecipeService {
         recipe.setCookingTime(spec.getCookingTime());
         recipe.setTotalTime(spec.getTotalTime());
         recipe.setRawText(spec.getRawText());
+        recipe.setCachedRenderedText(null);
         recipe.setPublic(spec.getIsPublic());
 
         final S3ImageEntity mainImage;
