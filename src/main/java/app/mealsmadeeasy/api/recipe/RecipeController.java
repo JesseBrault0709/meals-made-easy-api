@@ -72,7 +72,7 @@ public class RecipeController {
     public ResponseEntity<Map<String, Object>> updateByUsernameAndSlug(
             @PathVariable String username,
             @PathVariable String slug,
-            @RequestParam(defaultValue = "false") boolean includeRawText,
+            @RequestParam(defaultValue = "true") boolean includeRawText,
             @RequestBody RecipeUpdateSpec updateSpec,
             @AuthenticationPrincipal User principal
     ) throws ImageException, RecipeException {
