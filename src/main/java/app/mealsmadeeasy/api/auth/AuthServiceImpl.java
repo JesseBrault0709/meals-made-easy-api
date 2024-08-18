@@ -2,6 +2,7 @@ package app.mealsmadeeasy.api.auth;
 
 import app.mealsmadeeasy.api.jwt.JwtService;
 import app.mealsmadeeasy.api.user.UserEntity;
+import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
-public final class AuthServiceImpl implements AuthService {
+public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
@@ -60,11 +61,13 @@ public final class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void logout(String refreshToken) {
         this.refreshTokenRepository.findByToken(refreshToken).ifPresent(this.refreshTokenRepository::delete);
     }
 
     @Override
+    @Transactional
     public LoginDetails refresh(@Nullable String refreshToken) throws LoginException {
         if (refreshToken == null) {
             throw new LoginException(LoginExceptionReason.NO_REFRESH_TOKEN, "No refresh token provided.");
