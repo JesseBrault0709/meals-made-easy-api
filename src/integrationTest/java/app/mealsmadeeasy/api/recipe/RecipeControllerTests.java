@@ -273,7 +273,7 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.recipe.cookingTime").value(30))
                 .andExpect(jsonPath("$.recipe.totalTime").value(45))
                 .andExpect(jsonPath("$.recipe.text").value("<h1>Hello, Updated World!</h1>"))
-                .andExpect(jsonPath("$.recipe.rawText").doesNotExist())
+                .andExpect(jsonPath("$.recipe.rawText").value("# Hello, Updated World!"))
                 .andExpect(jsonPath("$.recipe.owner.id").value(owner.getId()))
                 .andExpect(jsonPath("$.recipe.owner.username").value(owner.getUsername()))
                 .andExpect(jsonPath("$.recipe.starCount").value(0))
@@ -282,24 +282,6 @@ public class RecipeControllerTests {
                 .andExpect(jsonPath("$.recipe.mainImage").value(nullValue()))
                 .andExpect(jsonPath("$.isStarred").value(false))
                 .andExpect(jsonPath("$.isOwner").value(true));
-    }
-
-    @Test
-    @DirtiesContext
-    public void updateRecipeIncludeRawText() throws Exception {
-        final User owner = this.createTestUser("owner");
-        final Recipe recipe = this.createTestRecipe(owner, false);
-        final String accessToken = this.getAccessToken(owner);
-        final String body = this.getUpdateBody();
-        this.mockMvc.perform(
-                post("/recipes/{username}/{slug}", owner.getUsername(), recipe.getSlug())
-                        .header("Authorization", "Bearer " + accessToken)
-                        .param("includeRawText", "true")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(body)
-        )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.recipe.rawText").value("# Hello, Updated World!"));
     }
 
     @Test
