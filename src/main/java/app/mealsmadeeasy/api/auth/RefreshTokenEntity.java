@@ -30,6 +30,9 @@ public class RefreshTokenEntity implements RefreshToken {
     @ManyToOne
     private UserEntity owner;
 
+    @Column(nullable = false)
+    private Boolean deleted = false;
+
     public Long getId() {
         return this.id;
     }
@@ -70,7 +73,7 @@ public class RefreshTokenEntity implements RefreshToken {
         return this.revoked;
     }
 
-    public void setRevoked(Boolean revoked) {
+    public void setRevoked(boolean revoked) {
         this.revoked = revoked;
     }
 
@@ -80,6 +83,15 @@ public class RefreshTokenEntity implements RefreshToken {
 
     public void setOwner(UserEntity owner) {
         this.owner = owner;
+    }
+
+    @Override
+    public boolean isDeleted() {
+        return this.deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
     @Override

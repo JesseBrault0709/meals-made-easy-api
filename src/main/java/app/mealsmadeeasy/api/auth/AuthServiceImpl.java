@@ -5,6 +5,7 @@ import app.mealsmadeeasy.api.user.UserEntity;
 import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AuthServiceImpl implements AuthService {
@@ -76,17 +78,18 @@ public class AuthServiceImpl implements AuthService {
         final RefreshTokenEntity old = this.refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new LoginException(
                         LoginExceptionReason.INVALID_REFRESH_TOKEN,
-                        "No such refresh-token: " + refreshToken
+                        "No such refresh token: " + refreshToken
                 ));
-        if (old.isRevoked()) {
-            throw new LoginException(LoginExceptionReason.INVALID_REFRESH_TOKEN, "RefreshToken is revoked.");
+        if (old.isRevoked() || old.isDeleted()) {
+            throw new LoginException(LoginExceptionReason.INVALID_REFRESH_TOKEN, "Invalid refresh token.");
         }
         if (old.getExpires().isBefore(LocalDateTime.now())) {
-            throw new LoginException(LoginExceptionReason.EXPIRED_REFRESH_TOKEN, "RefreshToken is expired.");
+            throw new LoginException(LoginExceptionReason.EXPIRED_REFRESH_TOKEN, "Refresh token is expired.");
         }
 
         final UserEntity principal = old.getOwner();
-        this.refreshTokenRepository.delete(old);
+        old.setDeleted(true);
+        this.refreshTokenRepository.save(old);
 
         final String username = principal.getUsername();
         return new LoginDetails(
@@ -94,6 +97,11 @@ public class AuthServiceImpl implements AuthService {
                 this.jwtService.generateAccessToken(username),
                 this.createRefreshToken(principal)
         );
+    }
+
+    @Scheduled(fixedDelay = 60, timeUnit = TimeUnit.SECONDS)
+    public void cleanUpDeletedRefreshTokens() {
+        this.refreshTokenRepository.deleteAllWhereSoftDeleted();
     }
 
 }
