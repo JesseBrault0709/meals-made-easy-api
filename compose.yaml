@@ -1,0 +1,56 @@
+name: meals-made-easy-api
+services:
+  db:
+    image: mysql:latest
+    ports:
+      - '55001:3306'
+      - '55000:33060'
+    env_file: .env
+    environment:
+      MYSQL_DATABASE: meals_made_easy_api
+      MYSQL_USER: meals-made-easy-api-user
+    healthcheck:
+      test: mysqladmin ping -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      interval: 5s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - mysql-data:/var/lib/mysql
+  minio:
+    image: minio/minio:latest
+    ports:
+      - 9000:9000
+      - 9001:9001
+    env_file:
+      - .env
+    environment:
+      MINIO_ROOT_USER: minio-root
+    volumes:
+      - minio-data:/data
+    command:
+      - server
+      - /data
+      - --console-address
+      - :9001
+  api:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: meals_made_easy_api
+      MYSQL_USERNAME: meals-made-easy-api-user
+      MINIO_HOST: minio
+      MINIO_PORT: 9000
+      MINIO_ROOT_USER: minio-root
+    ports:
+      - 8080:8080
+volumes:
+  mysql-data:
+  minio-data:
